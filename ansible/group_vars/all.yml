@@ -1,0 +1,67 @@
+---
+# =============================================================================
+# Common Configuration
+# =============================================================================
+timezone: "Europe/Bucharest"
+gpu_passthrough: true # Enable GPU passthrough for Jellyfin hardware transcoding
+
+# =============================================================================
+# Proxmox Host Configuration (for disk passthrough and LXC config)
+# =============================================================================
+proxmox_host: "pve01"  # Must match inventory hostname
+storage_lxc_id: 200
+media_lxc_id: 201
+
+# =============================================================================
+# Storage Disks Configuration
+# =============================================================================
+storage_disks:
+  - device: /dev/disk/by-id/ata-WDC_WD5000AADS-00L4B1_WD-WCAUH1494019
+    label: disk1
+  - device: /dev/disk/by-id/ata-WDC_WD10EZEX-22MFCA0_WD-WCC6Y3HENFP8
+    label: disk2
+
+# MergerFS Configuration - pools all disks into single mount
+mergerfs_mount_point: /srv/storage
+
+# =============================================================================
+# Bitwarden Secrets Manager - Secret UUIDs
+# =============================================================================
+bw_secret_smb_password: "aba2bcf5-9e18-4f79-80f0-b3d50122f0ac"
+bw_secret_wireguard_key: "bc554d8d-307a-426c-9dd1-b3d501230784"
+bw_secret_streamystats_db: "f56262c9-08eb-490d-9107-b3d5012326a2"
+bw_secret_streamystats_session: "5e58708f-9298-4e8f-9574-b3d501234c29"
+
+# =============================================================================
+# Storage LXC Configuration
+# =============================================================================
+storage_base_path: /srv/storage
+
+smb_users:
+  - name: media
+
+# =============================================================================
+# Media Stack LXC Configuration
+# =============================================================================
+docker_compose_path: /opt/media-stack
+puid: 1000
+pgid: 1000
+
+smb_mounts:
+  - name: media
+    src: "//{{ storage_server | default('192.168.0.101') }}/media"
+    dest: /mnt/media
+  - name: downloads
+    src: "//{{ storage_server | default('192.168.0.101') }}/downloads"
+    dest: /mnt/downloads
+
+media_dirs:
+  config: /opt/media-stack/config
+  media: /mnt/media
+  torrents: /mnt/downloads
+  transcodes: /tmp/jellyfin-transcodes
+
+# VPN Configuration
+vpn_provider: "nordvpn"
+vpn_type: "wireguard"
+vpn_country: "Romania"

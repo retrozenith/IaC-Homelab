@@ -1,0 +1,54 @@
+---
+- name: Deploy Storage Server
+  hosts: storage
+  become: true
+  gather_facts: false
+
+  vars_files:
+    - ../group_vars/all.yml
+
+  pre_tasks:
+    - name: Wait for system to be reachable
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Gather facts after connection
+      ansible.builtin.setup:
+
+  roles:
+    - role: bitwarden-secrets
+      tags: [secrets]
+      delegate_to: localhost
+      run_once: true
+
+    - role: disk-passthrough
+      tags: [disks, passthrough]
+      when: (storage_disks | default([])) | length > 0
+
+    - role: storage-disks
+      tags: [disks, format]
+      when: (storage_disks | default([])) | length > 0
+
+    - role: common
+      tags: [common, setup]
+
+    - role: samba
+      tags: [samba, storage]
+
+  post_tasks:
+    - name: Display storage information
+      ansible.builtin.debug:
+        msg: |
+          Storage Server deployed successfully!
+
+          SMB Shares available at:
+          - \\{{ ansible_host }}\media
+          - \\{{ ansible_host }}\downloads
+          - \\{{ ansible_host }}\backups
+
+          {% if (storage_disks | default([])) | length > 0 %}
+          Mounted disks:
+          {% for disk in storage_disks %}
+          - {{ disk.device }} -> /mnt/disks/{{ disk.label }}
+          {% endfor %}
+          {% endif %}

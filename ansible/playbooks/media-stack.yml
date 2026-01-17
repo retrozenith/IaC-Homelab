@@ -1,0 +1,59 @@
+---
+- name: Deploy Media Stack
+  hosts: media
+  become: true
+  gather_facts: false
+
+  vars_files:
+    - ../group_vars/all.yml
+
+  pre_tasks:
+    - name: Fetch secrets from Bitwarden (on localhost)
+      block:
+        - name: Include bitwarden-secrets role
+          ansible.builtin.include_role:
+            name: bitwarden-secrets
+      delegate_to: localhost
+      run_once: true
+
+    - name: Configure LXC for Docker support (on Proxmox host)
+      ansible.builtin.include_role:
+        name: lxc-docker-config
+      tags: [lxc-config]
+
+    - name: Wait for system to be reachable
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Gather facts after connection
+      ansible.builtin.setup:
+
+  roles:
+    - role: common
+      tags: [common, setup]
+
+    - role: smb-client
+      tags: [smb, storage]
+
+    - role: docker
+      tags: [docker, setup]
+
+    - role: media-stack
+      tags: [media-stack, deploy]
+
+  post_tasks:
+    - name: Display access information
+      ansible.builtin.debug:
+        msg: |
+          Media Stack deployed successfully!
+
+          Access your services at:
+          - Jellyfin:     http://{{ ansible_host }}:8096
+          - Jellyseerr:   http://{{ ansible_host }}:5055
+          - Radarr:       http://{{ ansible_host }}:7878
+          - Sonarr:       http://{{ ansible_host }}:8989
+          - Prowlarr:     http://{{ ansible_host }}:9696
+          - qBittorrent:  http://{{ ansible_host }}:8080
+          - StreamyStats: http://{{ ansible_host }}:3000
+
+          Storage mounted from: {{ storage_server | default('192.168.0.101') }}

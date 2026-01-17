@@ -1,0 +1,48 @@
+---
+- name: Create media-stack directory
+  ansible.builtin.file:
+    path: "{{ docker_compose_path }}"
+    state: directory
+    mode: "0755"
+
+- name: Create config directories for each service
+  ansible.builtin.file:
+    path: "{{ media_dirs.config }}/{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - jellyfin
+    - jellyseerr
+    - streamystats
+    - radarr
+    - sonarr
+    - prowlarr
+    - profilarr
+    - qbittorrent
+    - gluetun
+    - qui
+
+- name: Template docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ docker_compose_path }}/docker-compose.yml"
+    mode: "0644"
+  notify: Restart media stack
+
+- name: Template environment file
+  ansible.builtin.template:
+    src: .env.j2
+    dest: "{{ docker_compose_path }}/.env"
+    mode: "0600"
+  notify: Restart media stack
+
+- name: Pull Docker images
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_compose_path }}"
+    pull: always
+    state: present
+
+- name: Start media stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_compose_path }}"
+    state: present

@@ -1,0 +1,4 @@
+---
+# Site playbook - runs both storage and media-stack in order
+- import_playbook: storage.yml
+- import_playbook: media-stack.yml

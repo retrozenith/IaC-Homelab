@@ -1,0 +1,43 @@
+---
+- name: Install CIFS utilities
+  ansible.builtin.apt:
+    name:
+      - cifs-utils
+    state: present
+    update_cache: true
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: Create mount points
+  ansible.builtin.file:
+    path: "{{ item.dest }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ smb_mounts }}"
+
+- name: Create SMB credentials file
+  ansible.builtin.copy:
+    content: |
+      username=media
+      password={{ smb_media_password }}
+    dest: /root/.smbcredentials
+    mode: "0600"
+  no_log: true
+
+- name: Mount SMB shares
+  ansible.posix.mount:
+    path: "{{ item.dest }}"
+    src: "{{ item.src }}"
+    fstype: cifs
+    opts: "credentials=/root/.smbcredentials,uid=1000,gid=1000,iocharset=utf8,vers=3.0"
+    state: mounted
+  loop: "{{ smb_mounts }}"
+
+- name: Ensure mounts persist after reboot
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    line: "{{ item.src }} {{ item.dest }} cifs credentials=/root/.smbcredentials,uid=1000,gid=1000,iocharset=utf8,vers=3.0,_netdev 0 0"
+    state: present
+    create: true
+    mode: "0644"
+  loop: "{{ smb_mounts }}"

@@ -1,0 +1,57 @@
+- name: Configure DNS servers
+  ansible.builtin.copy:
+    dest: /etc/resolv.conf
+    content: |
+      nameserver 1.1.1.1
+      nameserver 8.8.8.8
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+    cache_valid_time: 3600
+
+- name: Install common packages
+  ansible.builtin.apt:
+    name:
+      - curl
+      - wget
+      - gnupg
+      - ca-certificates
+      - apt-transport-https
+      - python3
+      - python3-pip
+      - python3-docker
+      - htop
+      - iotop
+      - ncdu
+      - vim
+      - git
+      - jq
+    state: present
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+- name: Set timezone
+  ansible.builtin.file:
+    src: "/usr/share/zoneinfo/{{ timezone }}"
+    dest: /etc/localtime
+    state: link
+    force: true
+
+- name: Create media directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ media_dirs.config }}"
+    - "{{ media_dirs.media }}"
+    - "{{ media_dirs.media }}/movies"
+    - "{{ media_dirs.media }}/tv"
+    - "{{ media_dirs.media }}/anime"
+    - "{{ media_dirs.torrents }}"
+    - "{{ media_dirs.transcodes }}"

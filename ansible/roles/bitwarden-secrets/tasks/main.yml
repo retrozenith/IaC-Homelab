@@ -1,0 +1,77 @@
+---
+# Fetches secrets from Bitwarden Secrets Manager using the CLI
+# Requires: bws CLI installed and BWS_ACCESS_TOKEN environment variable set
+# This role runs on localhost (no sudo needed)
+
+- name: Check if BWS_ACCESS_TOKEN is set
+  ansible.builtin.fail:
+    msg: "BWS_ACCESS_TOKEN environment variable must be set"
+  when: lookup('env', 'BWS_ACCESS_TOKEN') == ''
+
+- name: Fetch SMB password from Bitwarden
+  ansible.builtin.command:
+    cmd: "bws secret get {{ bw_secret_smb_password }} --output json"
+  environment:
+    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
+  register: bw_smb_result
+  changed_when: false
+  no_log: true
+  become: false
+  when: bw_secret_smb_password is defined and bw_secret_smb_password != ''
+
+- name: Set SMB password fact
+  ansible.builtin.set_fact:
+    smb_media_password: "{{ (bw_smb_result.stdout | from_json).value }}"
+  no_log: true
+  when: bw_smb_result is defined and bw_smb_result.stdout is defined
+
+- name: Fetch WireGuard key from Bitwarden
+  ansible.builtin.command:
+    cmd: "bws secret get {{ bw_secret_wireguard_key }} --output json"
+  environment:
+    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
+  register: bw_wg_result
+  changed_when: false
+  no_log: true
+  become: false
+  when: bw_secret_wireguard_key is defined and bw_secret_wireguard_key != ''
+
+- name: Set WireGuard key fact
+  ansible.builtin.set_fact:
+    wireguard_private_key: "{{ (bw_wg_result.stdout | from_json).value }}"
+  no_log: true
+  when: bw_wg_result is defined and bw_wg_result.stdout is defined
+
+- name: Fetch StreamyStats DB password from Bitwarden
+  ansible.builtin.command:
+    cmd: "bws secret get {{ bw_secret_streamystats_db }} --output json"
+  environment:
+    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
+  register: bw_ss_db_result
+  changed_when: false
+  no_log: true
+  become: false
+  when: bw_secret_streamystats_db is defined and bw_secret_streamystats_db != ''
+
+- name: Set StreamyStats DB password fact
+  ansible.builtin.set_fact:
+    streamystats_db_password: "{{ (bw_ss_db_result.stdout | from_json).value }}"
+  no_log: true
+  when: bw_ss_db_result is defined and bw_ss_db_result.stdout is defined
+
+- name: Fetch StreamyStats session secret from Bitwarden
+  ansible.builtin.command:
+    cmd: "bws secret get {{ bw_secret_streamystats_session }} --output json"
+  environment:
+    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
+  register: bw_ss_session_result
+  changed_when: false
+  no_log: true
+  become: false
+  when: bw_secret_streamystats_session is defined and bw_secret_streamystats_session != ''
+
+- name: Set StreamyStats session secret fact
+  ansible.builtin.set_fact:
+    streamystats_session_secret: "{{ (bw_ss_session_result.stdout | from_json).value }}"
+  no_log: true
+  when: bw_ss_session_result is defined and bw_ss_session_result.stdout is defined

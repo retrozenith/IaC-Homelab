@@ -1,0 +1,58 @@
+---
+# This role configures raw disk passthrough for the storage LXC
+# Runs on the Proxmox host to modify the LXC config file
+
+- name: Check if storage disks are defined
+  ansible.builtin.set_fact:
+    has_storage_disks: "{{ (storage_disks | default([])) | length > 0 }}"
+
+- name: Display disk passthrough status
+  ansible.builtin.debug:
+    msg: "Storage disks configured: {{ storage_disks | default([]) }}"
+  when: has_storage_disks
+
+- name: Configure disk passthrough on Proxmox host
+  when: has_storage_disks
+  block:
+    - name: Format disks on host
+      community.general.filesystem:
+        fstype: ext4
+        dev: "{{ item.device }}"
+        opts: "-L {{ item.label }}"
+      loop: "{{ storage_disks }}"
+      delegate_to: "{{ proxmox_host }}"
+
+    - name: Create mount points on host
+      ansible.builtin.file:
+        path: "/mnt/host/{{ item.label }}"
+        state: directory
+        mode: "0755"
+      loop: "{{ storage_disks }}"
+      delegate_to: "{{ proxmox_host }}"
+
+    - name: Mount disks on host
+      ansible.posix.mount:
+        path: "/mnt/host/{{ item.label }}"
+        src: "{{ item.device }}"
+        fstype: ext4
+        state: mounted
+      loop: "{{ storage_disks }}"
+      delegate_to: "{{ proxmox_host }}"
+
+    - name: Add bind mount entries to LXC config
+      ansible.builtin.lineinfile:
+        path: "/etc/pve/lxc/{{ storage_lxc_id }}.conf"
+        line: "lxc.mount.entry: /mnt/host/{{ item.label }} mnt/disks/{{ item.label }} none bind,create=dir,optional 0 0"
+        state: present
+      loop: "{{ storage_disks }}"
+      delegate_to: "{{ proxmox_host }}"
+      notify: Restart storage LXC
+
+    - name: Enable nesting and fuse features
+      ansible.builtin.command:
+        cmd: "pct set {{ storage_lxc_id }} -features nesting=1,fuse=1"
+      delegate_to: "{{ proxmox_host }}"
+      notify: Restart storage LXC
+      changed_when: true
+
+- meta: flush_handlers

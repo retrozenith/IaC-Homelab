@@ -1,0 +1,225 @@
+services:
+  # === MEDIA SERVERS ===
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    privileged: true
+    networks:
+      - reverse-proxy
+    ports:
+      - "8096:8096"
+      - "7359:7359"
+    volumes:
+      - {{ media_dirs.config }}/jellyfin:/config:rw
+      - {{ media_dirs.transcodes }}:/transcodes:rw
+      - {{ media_dirs.media }}/anime:/media/anime:ro
+      - {{ media_dirs.media }}/movies:/media/movies:ro
+      - {{ media_dirs.media }}/tv:/media/tv:ro
+      - /dev/dri:/dev/dri:rw
+    environment:
+      JELLYFIN_PublishedServerUrl: ${JELLYFIN_PublishedServerUrl}
+      TZ: ${TZ}
+      PUID: ${PUID}
+      PGID: ${PGID}
+
+  streamystats:
+    image: docker.io/fredrikburmester/streamystats-v2-aio:latest
+    container_name: streamystats
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - reverse-proxy
+    ports:
+      - "3000:3000"
+    volumes:
+      - {{ media_dirs.config }}/streamystats/postgres:/var/lib/postgresql/data:rw
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB}
+      SESSION_SECRET: ${SESSION_SECRET}
+      NODE_ENV: production
+      TZ: ${TZ}
+      SESSION_POLL_INTERVAL_MS: "5000"
+      CRON_ACTIVITY_SYNC: "*/1 * * * *"
+      CRON_RECENT_ITEMS_SYNC: "*/1 * * * *"
+      CRON_USER_SYNC: "*/1 * * * *"
+      CRON_PEOPLE_SYNC: "*/15 * * * *"
+      CRON_EMBEDDINGS_SYNC: "*/15 * * * *"
+      CRON_GEOLOCATION_SYNC: "*/5 * * * *"
+      CRON_FINGERPRINT_SYNC: "0 4 * * *"
+      CRON_JOB_CLEANUP: "*/1 * * * *"
+      CRON_OLD_JOB_CLEANUP: "0 3 * * *"
+      CRON_FULL_SYNC: "0 2 * * *"
+      CRON_DELETED_ITEMS_CLEANUP: "0 * * * *"
+      SKIP_STARTUP_FULL_SYNC: "false"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - reverse-proxy
+    ports:
+      - "5055:5055"
+    volumes:
+      - {{ media_dirs.config }}/jellyseerr:/app/config:rw
+    environment:
+      TZ: ${TZ}
+      LOG_LEVEL: info
+      PORT: "5055"
+
+  # === MEDIA MANAGEMENT (ARR STACK) ===
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - reverse-proxy
+    ports:
+      - "7878:7878"
+    volumes:
+      - {{ media_dirs.config }}/radarr:/config:rw
+      - {{ media_dirs.media }}/movies:/movies:rw
+      - {{ media_dirs.torrents }}:/downloads:rw
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - reverse-proxy
+    ports:
+      - "8989:8989"
+    volumes:
+      - {{ media_dirs.config }}/sonarr:/config:rw
+      - {{ media_dirs.media }}/tv:/tv:rw
+      - {{ media_dirs.media }}/anime:/anime:rw
+      - {{ media_dirs.torrents }}:/downloads:rw
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - reverse-proxy
+    ports:
+      - "9696:9696"
+    volumes:
+      - {{ media_dirs.config }}/prowlarr:/config:rw
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+
+  profilarr:
+    image: santiagosayshey/profilarr:latest
+    container_name: profilarr
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - reverse-proxy
+    ports:
+      - "6868:6868"
+    volumes:
+      - {{ media_dirs.config }}/profilarr:/config:rw
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+
+  # === DOWNLOAD CLIENTS ===
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "8000:8000"   # Gluetun control
+      - "8080:8080"   # qBittorrent WebUI
+      - "6881:6881"   # Torrent port
+      - "6881:6881/udp"
+    volumes:
+      - {{ media_dirs.config }}/gluetun:/gluetun:rw
+    environment:
+      VPN_SERVICE_PROVIDER: ${VPN_SERVICE_PROVIDER}
+      VPN_TYPE: ${VPN_TYPE}
+      WIREGUARD_PRIVATE_KEY: ${WIREGUARD_PRIVATE_KEY}
+      SERVER_COUNTRIES: ${SERVER_COUNTRIES}
+      TZ: ${TZ}
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    network_mode: "service:gluetun"
+    depends_on:
+      - gluetun
+    volumes:
+      - {{ media_dirs.config }}/qbittorrent:/config:rw
+      - {{ media_dirs.torrents }}:/downloads:rw
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+      WEBUI_PORT: "8080"
+      TORRENTING_PORT: "6881"
+
+  qui:
+    image: ghcr.io/autobrr/qui:latest
+    container_name: qui
+    restart: unless-stopped
+    networks:
+      - reverse-proxy
+    ports:
+      - "7476:7476"
+    volumes:
+      - {{ media_dirs.config }}/qui:/config
+
+  flaresolverr:
+    image: flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - reverse-proxy
+    ports:
+      - "8191:8191"
+    environment:
+      LOG_LEVEL: info
+      TZ: ${TZ}
+
+networks:
+  reverse-proxy:
+    driver: bridge
