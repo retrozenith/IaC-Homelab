@@ -1,0 +1,36 @@
+---
+- name: Stop LXC container
+  ansible.builtin.command:
+    cmd: "pct stop {{ target_lxc_id }}"
+  delegate_to: "{{ proxmox_host }}"
+  register: stop_lxc
+  failed_when: stop_lxc.rc != 0 and "is not running" not in stop_lxc.stderr
+  changed_when: stop_lxc.rc == 0
+
+- name: Wait for LXC to stop
+  ansible.builtin.pause:
+    seconds: 5
+
+- name: Enable nesting feature
+  ansible.builtin.lineinfile:
+    path: "/etc/pve/lxc/{{ target_lxc_id }}.conf"
+    regexp: "^features:"
+    line: "features: nesting=1"
+    state: present
+  delegate_to: "{{ proxmox_host }}"
+
+- name: Start LXC container
+  ansible.builtin.command:
+    cmd: "pct start {{ target_lxc_id }}"
+  delegate_to: "{{ proxmox_host }}"
+  register: start_lxc
+  failed_when: start_lxc.rc != 0 and "is already running" not in start_lxc.stderr
+  changed_when: start_lxc.rc == 0
+
+- name: Wait for LXC to start
+  ansible.builtin.pause:
+    seconds: 10
+
+- name: Wait for LXC to be reachable
+  ansible.builtin.wait_for_connection:
+    timeout: 120

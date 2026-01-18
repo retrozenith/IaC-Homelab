@@ -72,6 +72,9 @@ media:
 traefik:
 	cd ansible && ansible-playbook playbooks/traefik.yml
 
+monitoring:
+	cd ansible && ansible-playbook playbooks/monitoring.yml
+
 # =============================================================================
 # Linting & Testing
 # =============================================================================

@@ -30,6 +30,16 @@ http:
       tls:
         certResolver: cloudflare
 
+    grafana:
+      rule: "Host(`monitoring.{{ domain_name }}`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+      service: grafana
+      tls:
+        certResolver: cloudflare
+
   middlewares:
     security-headers:
       headers:
@@ -60,4 +70,10 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.0.100:3000"
+        passHostHeader: true
+
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.102:3000"
         passHostHeader: true

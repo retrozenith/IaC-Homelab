@@ -251,12 +251,78 @@ resource "proxmox_virtual_environment_container" "traefik" {
   tags = ["traefik", "proxy", "docker", "managed-by-terraform"]
 }
 
+# =============================================================================
+# Monitoring LXC - Grafana + Prometheus
+# =============================================================================
+resource "proxmox_virtual_environment_container" "monitoring" {
+  node_name   = var.proxmox_node
+  vm_id       = var.monitoring_lxc_id
+  description = "<b>Monitoring LXC</b> - Grafana + Prometheus monitoring stack<br><br><b>Services:</b><br>• <a href='http://${split("/", var.monitoring_lxc_ip)[0]}:3000' target='_blank'>Grafana</a> :3000<br>• <a href='http://${split("/", var.monitoring_lxc_ip)[0]}:9090' target='_blank'>Prometheus</a> :9090"
+
+  operating_system {
+    template_file_id = var.lxc_template
+    type             = "debian"
+  }
+
+  initialization {
+    hostname = "monitoring"
+
+    ip_config {
+      ipv4 {
+        address = var.monitoring_lxc_ip
+        gateway = var.lxc_gateway
+      }
+    }
+
+    user_account {
+      keys     = [data.external.bw_ssh_public_key.result.value]
+      password = data.external.bw_lxc_root_password.result.value
+    }
+
+    dns {
+      domain  = "local"
+      servers = ["1.1.1.1", "8.8.8.8"]
+    }
+  }
+
+  cpu {
+    cores = var.monitoring_lxc_cores
+  }
+
+  memory {
+    dedicated = var.monitoring_lxc_memory
+    swap      = 512
+  }
+
+  disk {
+    datastore_id = var.lxc_storage
+    size         = 20
+  }
+
+  network_interface {
+    name   = "eth0"
+    bridge = var.lxc_bridge
+  }
+
+  unprivileged = true
+
+  lifecycle {
+    ignore_changes = [features, unprivileged]
+  }
+
+  started       = true
+  start_on_boot = true
+
+  tags = ["monitoring", "grafana", "prometheus", "docker", "managed-by-terraform"]
+}
+
 # Wait for LXCs to be ready
 resource "null_resource" "wait_for_lxc" {
   depends_on = [
     proxmox_virtual_environment_container.storage,
     proxmox_virtual_environment_container.media_stack,
-    proxmox_virtual_environment_container.traefik
+    proxmox_virtual_environment_container.traefik,
+    proxmox_virtual_environment_container.monitoring
   ]
 
   provisioner "local-exec" {

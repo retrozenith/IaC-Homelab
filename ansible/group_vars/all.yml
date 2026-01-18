@@ -12,6 +12,7 @@ proxmox_host: "pve01" # Must match inventory hostname
 storage_lxc_id: 200
 media_lxc_id: 201
 traefik_lxc_id: 202
+monitoring_lxc_id: 203
 
 # =============================================================================
 # Storage Disks Configuration

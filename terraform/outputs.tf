@@ -41,6 +41,20 @@ output "traefik_lxc_ip" {
 }
 
 # =============================================================================
+# Monitoring LXC Outputs
+# =============================================================================
+
+output "monitoring_lxc_id" {
+  description = "Monitoring LXC container ID"
+  value       = proxmox_virtual_environment_container.monitoring.vm_id
+}
+
+output "monitoring_lxc_ip" {
+  description = "Monitoring LXC IP address"
+  value       = split("/", var.monitoring_lxc_ip)[0]
+}
+
+# =============================================================================
 # Bitwarden Secret IDs (for Ansible)
 # =============================================================================
 
@@ -83,6 +97,12 @@ output "ansible_inventory" {
           hosts:
             traefik:
               ansible_host: ${split("/", var.traefik_lxc_ip)[0]}
+              ansible_user: root
+              ansible_python_interpreter: /usr/bin/python3
+        monitoring:
+          hosts:
+            monitoring:
+              ansible_host: ${split("/", var.monitoring_lxc_ip)[0]}
               ansible_user: root
               ansible_python_interpreter: /usr/bin/python3
   EOT

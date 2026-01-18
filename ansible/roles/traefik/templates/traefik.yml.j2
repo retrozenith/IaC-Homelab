@@ -20,6 +20,8 @@ entryPoints:
           scheme: https
   websecure:
     address: ":443"
+  metrics:
+    address: ":8082"
 
 certificatesResolvers:
   cloudflare:
@@ -38,3 +40,10 @@ log:
 accessLog:
   filePath: "/var/log/traefik/access.log"
   bufferingSize: 100
+
+metrics:
+  prometheus:
+    entryPoint: metrics
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    addRoutersLabels: true

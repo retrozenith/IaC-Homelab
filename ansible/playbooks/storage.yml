@@ -35,6 +35,9 @@
     - role: samba
       tags: [samba, storage]
 
+    - role: node-exporter
+      tags: [monitoring, node-exporter]
+
   post_tasks:
     - name: Display storage information
       ansible.builtin.debug:

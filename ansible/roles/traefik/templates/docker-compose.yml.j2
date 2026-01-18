@@ -9,6 +9,7 @@ services:
       - "80:80"
       - "443:443"
       - "8080:8080" # Dashboard
+      - "8082:8082" # Metrics
     environment:
       - CF_DNS_API_TOKEN={{ cloudflare_api_token | default('') }}
       - CF_ZONE_API_TOKEN={{ cloudflare_api_token | default('') }}

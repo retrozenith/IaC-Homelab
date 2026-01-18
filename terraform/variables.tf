@@ -166,6 +166,34 @@ variable "traefik_lxc_memory" {
 }
 
 # =============================================================================
+# Monitoring LXC Configuration
+# =============================================================================
+
+variable "monitoring_lxc_id" {
+  description = "Monitoring LXC container ID"
+  type        = number
+  default     = 203
+}
+
+variable "monitoring_lxc_ip" {
+  description = "Monitoring LXC static IP with CIDR"
+  type        = string
+  default     = "192.168.0.102/24"
+}
+
+variable "monitoring_lxc_cores" {
+  description = "Monitoring LXC CPU cores"
+  type        = number
+  default     = 2
+}
+
+variable "monitoring_lxc_memory" {
+  description = "Monitoring LXC memory in MB"
+  type        = number
+  default     = 2048
+}
+
+# =============================================================================
 # Bitwarden Secret IDs for Ansible
 # =============================================================================
 

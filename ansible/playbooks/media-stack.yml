@@ -38,6 +38,9 @@
     - role: docker
       tags: [docker, setup]
 
+    - role: node-exporter
+      tags: [monitoring, node-exporter]
+
     - role: media-stack
       tags: [media-stack, deploy]
 

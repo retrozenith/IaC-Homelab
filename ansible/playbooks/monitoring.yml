@@ -1,0 +1,22 @@
+---
+- name: Deploy Monitoring Stack
+  hosts: monitoring
+  gather_facts: true
+  vars:
+    target_lxc_id: "{{ monitoring_lxc_id }}"
+
+  pre_tasks:
+    - name: Fetch secrets from Bitwarden (on localhost)
+      block:
+        - name: Include bitwarden-secrets role
+          ansible.builtin.include_role:
+            name: bitwarden-secrets
+      delegate_to: localhost
+      run_once: true
+
+  roles:
+    - role: lxc-nesting
+      tags: [setup, lxc]
+    - common
+    - docker
+    - monitoring

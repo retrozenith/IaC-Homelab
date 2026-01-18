@@ -1,0 +1,5 @@
+---
+# Monitoring stack defaults
+monitoring_stack_path: /opt/monitoring
+monitoring_prometheus_retention: "15d"
+monitoring_grafana_admin_password: "admin" # Should be changed on first login

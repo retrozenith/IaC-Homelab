@@ -35,6 +35,9 @@
     - role: docker
       tags: [docker, setup]
 
+    - role: node-exporter
+      tags: [node-exporter, monitoring]
+
     - role: traefik
       tags: [traefik, deploy]
 
