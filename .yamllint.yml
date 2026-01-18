@@ -1,0 +1,50 @@
+# Yamllint configuration for Ansible
+# Compatible with ansible-lint requirements
+---
+extends: default
+
+rules:
+  # Relaxed line length for Ansible playbooks
+  line-length:
+    max: 160
+    level: warning
+
+  # Allow truthy values common in Ansible (yes/no, on/off)
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no']
+    check-keys: false
+
+  # Ansible uses explicit document start
+  document-start: disable
+
+  # Required by ansible-lint
+  comments-indentation: false
+
+  # Required by ansible-lint - octal values
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
+
+  # Allow comments without space (common in Jinja2)
+  comments:
+    min-spaces-from-content: 1
+
+  # Indentation settings for Ansible
+  indentation:
+    spaces: 2
+    indent-sequences: true
+
+  # Braces spacing
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  # Brackets spacing
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 0
+
+ignore: |
+  .git/
+  .terraform/
+  *.log

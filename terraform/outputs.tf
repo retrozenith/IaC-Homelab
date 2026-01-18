@@ -27,15 +27,29 @@ output "media_lxc_ip" {
 }
 
 # =============================================================================
+# Traefik LXC Outputs
+# =============================================================================
+
+output "traefik_lxc_id" {
+  description = "Traefik LXC container ID"
+  value       = proxmox_virtual_environment_container.traefik.vm_id
+}
+
+output "traefik_lxc_ip" {
+  description = "Traefik LXC IP address"
+  value       = split("/", var.traefik_lxc_ip)[0]
+}
+
+# =============================================================================
 # Bitwarden Secret IDs (for Ansible)
 # =============================================================================
 
 output "bw_secret_ids" {
   description = "Bitwarden secret IDs to pass to Ansible"
   value = {
-    smb_password       = var.bw_secret_smb_password
-    wireguard_key      = var.bw_secret_wireguard_key
-    streamystats_db    = var.bw_secret_streamystats_db
+    smb_password         = var.bw_secret_smb_password
+    wireguard_key        = var.bw_secret_wireguard_key
+    streamystats_db      = var.bw_secret_streamystats_db
     streamystats_session = var.bw_secret_streamystats_session
   }
   sensitive = true
@@ -47,7 +61,7 @@ output "bw_secret_ids" {
 
 output "ansible_inventory" {
   description = "Ansible inventory content"
-  value = <<-EOT
+  value       = <<-EOT
     all:
       vars:
         bw_access_token: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
@@ -65,5 +79,11 @@ output "ansible_inventory" {
               ansible_user: root
               ansible_python_interpreter: /usr/bin/python3
               storage_server: ${split("/", var.storage_lxc_ip)[0]}
+        traefik:
+          hosts:
+            traefik:
+              ansible_host: ${split("/", var.traefik_lxc_ip)[0]}
+              ansible_user: root
+              ansible_python_interpreter: /usr/bin/python3
   EOT
 }
