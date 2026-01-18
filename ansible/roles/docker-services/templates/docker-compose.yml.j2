@@ -13,9 +13,10 @@ services:
     volumes:
       - {{ media_dirs.config }}/vaultwarden:/data
     environment:
-      DOMAIN: "https://vaultwarden.{{ domain_name }}"
+      DOMAIN: "https://vault.{{ domain_name }}"
       SIGNUPS_ALLOWED: "false"
       TZ: ${TZ}
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
 
   # === MEDIA SERVERS ===
   jellyfin:

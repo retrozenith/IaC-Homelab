@@ -21,7 +21,7 @@ http:
         certResolver: cloudflare
 
     vaultwarden:
-      rule: "Host(`vaultwarden.{{ domain_name }}`)"
+      rule: "Host(`vault.{{ domain_name }}`)"
       entryPoints:
         - websecure
       middlewares:

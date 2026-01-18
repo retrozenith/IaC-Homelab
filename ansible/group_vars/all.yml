@@ -29,13 +29,14 @@ mergerfs_mount_point: /srv/storage
 # =============================================================================
 # Bitwarden Secrets Manager - Secret UUIDs
 # =============================================================================
-bw_secret_smb_password: "aba2bcf5-9e18-4f79-80f0-b3d50122f0ac"
-bw_secret_wireguard_key: "bc554d8d-307a-426c-9dd1-b3d501230784"
-bw_secret_streamystats_db: "f56262c9-08eb-490d-9107-b3d5012326a2"
-bw_secret_streamystats_session: "5e58708f-9298-4e8f-9574-b3d501234c29"
-bw_secret_cloudflare_token: "04d2c6ad-0f4c-483b-9809-b3d600717e0a"
-bw_secret_domain_name: "21c4bd56-01d0-4c9c-8679-b3d60071ad6c"
-bw_secret_le_email: "35b5881d-9726-422c-90e1-b3d60071c880"
+bw_secret_smb_password: "aba2bcf5-9e18-4f79-80f0-b3d50122f0ac" # gitleaks:allow
+bw_secret_wireguard_key: "bc554d8d-307a-426c-9dd1-b3d501230784" # gitleaks:allow
+bw_secret_streamystats_db: "f56262c9-08eb-490d-9107-b3d5012326a2" # gitleaks:allow
+bw_secret_streamystats_session: "5e58708f-9298-4e8f-9574-b3d501234c29" # gitleaks:allow
+bw_secret_cloudflare_token: "04d2c6ad-0f4c-483b-9809-b3d600717e0a" # gitleaks:allow
+bw_secret_domain_name: "21c4bd56-01d0-4c9c-8679-b3d60071ad6c" # gitleaks:allow
+bw_secret_le_email: "35b5881d-9726-422c-90e1-b3d60071c880" # gitleaks:allow
+bw_secret_vaultwarden_token: "e51dbb14-a89f-4500-b745-b3d600f45034" # gitleaks:allow
 
 # =============================================================================
 # Storage LXC Configuration

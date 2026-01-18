@@ -126,3 +126,33 @@
     le_email: "{{ (bw_email_result.stdout | from_json).value }}"
   no_log: true
   when: bw_email_result is defined and bw_email_result.stdout is defined
+
+- name: Fetch Vaultwarden Token from Bitwarden
+  ansible.builtin.command:
+    cmd: "bws secret get {{ bw_secret_vaultwarden_token }} --output json"
+  environment:
+    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
+  register: bw_token_result
+  changed_when: false
+  no_log: true
+  become: false
+  when: bw_secret_vaultwarden_token is defined and bw_secret_vaultwarden_token != '' and 'PLACEHOLDER' not in bw_secret_vaultwarden_token
+
+- name: Generate Argon2 hash for Vaultwarden Token
+  ansible.builtin.shell: |
+    set -o pipefail
+    SALT=$(openssl rand -base64 16)
+    echo -n "{{ (bw_token_result.stdout | from_json).value }}" | argon2 "$SALT" -e -id -t 2 -k 65536 -p 4
+  register: vaultwarden_hash_result
+  changed_when: false
+  no_log: true
+  become: false
+  args:
+    executable: /bin/bash
+  when: bw_token_result is defined and bw_token_result.stdout is defined
+
+- name: Set Vaultwarden Token Hash fact
+  ansible.builtin.set_fact:
+    vaultwarden_admin_token: "{{ vaultwarden_hash_result.stdout }}"
+  no_log: true
+  when: vaultwarden_hash_result is defined and vaultwarden_hash_result.stdout is defined

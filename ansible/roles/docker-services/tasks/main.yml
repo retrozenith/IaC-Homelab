@@ -45,6 +45,13 @@
     mode: "0600"
   notify: Restart docker-services
 
+- name: Remove admin_token from Vaultwarden config.json (allow ENV override)
+  ansible.builtin.lineinfile:
+    path: "{{ media_dirs.config }}/vaultwarden/config.json"
+    regexp: '^\s*"admin_token":'
+    state: absent
+  ignore_errors: true
+
 - name: Remove conflicting containers (migration cleanup)
   community.docker.docker_container:
     name: "{{ item }}"
