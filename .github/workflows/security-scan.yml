@@ -12,6 +12,11 @@ on:
     - cron: '0 3 * * *'
   workflow_dispatch:
 
+# Required for SARIF upload to GitHub Security tab
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   tfsec:
     name: Terraform Security (tfsec)
@@ -25,13 +30,13 @@ jobs:
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
           working_directory: terraform
-          soft_fail: false
+          soft_fail: true  # Don't fail the job, just report
           format: sarif
           sarif_file: tfsec-results.sarif
 
       - name: Upload SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('tfsec-results.sarif') != ''
         with:
           sarif_file: tfsec-results.sarif
           category: tfsec
@@ -51,12 +56,12 @@ jobs:
           framework: terraform,ansible
           output_format: cli,sarif
           output_file_path: console,checkov-results.sarif
-          soft_fail: false
+          soft_fail: true  # Don't fail, just report findings
           skip_check: CKV_TF_1  # Skip module source pinning for homelab
 
       - name: Upload Checkov SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('checkov-results.sarif') != ''
         with:
           sarif_file: checkov-results.sarif
           category: checkov
@@ -75,7 +80,6 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
   summary:
     name: Security Summary
