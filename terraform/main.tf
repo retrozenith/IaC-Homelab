@@ -99,6 +99,10 @@ resource "proxmox_virtual_environment_container" "storage" {
     # Enabled via Ansible due to Terraform permissions issues
   }
 
+  lifecycle {
+    ignore_changes = [features, unprivileged]
+  }
+
   started       = true
   start_on_boot = true
 
@@ -163,17 +167,88 @@ resource "proxmox_virtual_environment_container" "media_stack" {
   # Start as unprivileged, Ansible will reconfigure for Docker
   unprivileged = true
 
+  lifecycle {
+    ignore_changes = [features, unprivileged]
+  }
+
   started       = true
   start_on_boot = true
 
   tags = ["media", "docker", "managed-by-terraform"]
 }
 
+# =============================================================================
+# Traefik LXC - Reverse Proxy
+# =============================================================================
+resource "proxmox_virtual_environment_container" "traefik" {
+  node_name   = var.proxmox_node
+  vm_id       = var.traefik_lxc_id
+  description = "Traefik LXC - Reverse Proxy"
+
+  operating_system {
+    template_file_id = var.lxc_template
+    type             = "debian"
+  }
+
+  initialization {
+    hostname = "traefik"
+
+    ip_config {
+      ipv4 {
+        address = var.traefik_lxc_ip
+        gateway = var.lxc_gateway
+      }
+    }
+
+    user_account {
+      keys     = [data.external.bw_ssh_public_key.result.value]
+      password = data.external.bw_lxc_root_password.result.value
+    }
+
+    dns {
+      domain  = "local"
+      servers = ["1.1.1.1", "8.8.8.8"]
+    }
+  }
+
+  cpu {
+    cores = var.traefik_lxc_cores
+  }
+
+  memory {
+    dedicated = var.traefik_lxc_memory
+    swap      = 512
+  }
+
+  disk {
+    datastore_id = var.lxc_storage
+    size         = 8
+  }
+
+  network_interface {
+    name   = "eth0"
+    bridge = var.lxc_bridge
+  }
+
+  # Start as unprivileged, Ansible may reconfigure if needed
+  unprivileged = true
+
+  lifecycle {
+    ignore_changes = [features, unprivileged]
+  }
+
+  started       = true
+  start_on_boot = true
+
+  tags = ["traefik", "proxy", "docker", "managed-by-terraform"]
+}
+
 # Wait for LXCs to be ready
 resource "null_resource" "wait_for_lxc" {
   depends_on = [
     proxmox_virtual_environment_container.storage,
-    proxmox_virtual_environment_container.media_stack
+    proxmox_virtual_environment_container.media_stack,
+    proxmox_virtual_environment_container.traefik
   ]
 
   provisioner "local-exec" {

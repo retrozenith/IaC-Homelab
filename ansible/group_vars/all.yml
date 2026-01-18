@@ -8,9 +8,10 @@ gpu_passthrough: true # Enable GPU passthrough for Jellyfin hardware transcoding
 # =============================================================================
 # Proxmox Host Configuration (for disk passthrough and LXC config)
 # =============================================================================
-proxmox_host: "pve01"  # Must match inventory hostname
+proxmox_host: "pve01" # Must match inventory hostname
 storage_lxc_id: 200
 media_lxc_id: 201
+traefik_lxc_id: 202
 
 # =============================================================================
 # Storage Disks Configuration
@@ -31,6 +32,9 @@ bw_secret_smb_password: "aba2bcf5-9e18-4f79-80f0-b3d50122f0ac"
 bw_secret_wireguard_key: "bc554d8d-307a-426c-9dd1-b3d501230784"
 bw_secret_streamystats_db: "f56262c9-08eb-490d-9107-b3d5012326a2"
 bw_secret_streamystats_session: "5e58708f-9298-4e8f-9574-b3d501234c29"
+bw_secret_cloudflare_token: "04d2c6ad-0f4c-483b-9809-b3d600717e0a"
+bw_secret_domain_name: "21c4bd56-01d0-4c9c-8679-b3d60071ad6c"
+bw_secret_le_email: "35b5881d-9726-422c-90e1-b3d60071c880"
 
 # =============================================================================
 # Storage LXC Configuration

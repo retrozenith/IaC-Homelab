@@ -1,0 +1,47 @@
+---
+# This role configures the Traefik LXC for Docker support
+# Runs on the Proxmox host to enable privileged mode and features
+
+- name: Stop Traefik LXC
+  ansible.builtin.command:
+    cmd: "pct stop {{ traefik_lxc_id }}"
+  delegate_to: "{{ proxmox_host }}"
+  register: stop_traefik
+  failed_when: stop_traefik.rc != 0 and "is not running" not in stop_traefik.stderr
+  changed_when: stop_traefik.rc == 0
+
+- name: Wait for LXC to stop
+  ansible.builtin.pause:
+    seconds: 5
+
+- name: Enable privileged mode for Traefik LXC
+  ansible.builtin.lineinfile:
+    path: "/etc/pve/lxc/{{ traefik_lxc_id }}.conf"
+    regexp: "^unprivileged:"
+    line: "unprivileged: 0"
+    state: present
+  delegate_to: "{{ proxmox_host }}"
+
+- name: Enable nesting feature
+  ansible.builtin.lineinfile:
+    path: "/etc/pve/lxc/{{ traefik_lxc_id }}.conf"
+    regexp: "^features:"
+    line: "features: nesting=1,fuse=1"
+    state: present
+  delegate_to: "{{ proxmox_host }}"
+
+- name: Start Traefik LXC
+  ansible.builtin.command:
+    cmd: "pct start {{ traefik_lxc_id }}"
+  delegate_to: "{{ proxmox_host }}"
+  register: start_traefik
+  failed_when: start_traefik.rc != 0 and "is already running" not in start_traefik.stderr
+  changed_when: start_traefik.rc == 0
+
+- name: Wait for LXC to start
+  ansible.builtin.pause:
+    seconds: 10
+
+- name: Wait for LXC to be reachable
+  ansible.builtin.wait_for_connection:
+    timeout: 120

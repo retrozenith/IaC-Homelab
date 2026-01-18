@@ -6,7 +6,9 @@
   ansible.builtin.command:
     cmd: "pct stop {{ media_lxc_id }}"
   delegate_to: "{{ proxmox_host }}"
-  ignore_errors: true
+  register: stop_media_lxc
+  failed_when: stop_media_lxc.rc != 0 and "is not running" not in stop_media_lxc.stderr
+  changed_when: stop_media_lxc.rc == 0
 
 - name: Wait for LXC to stop
   ansible.builtin.pause:
@@ -38,6 +40,7 @@
   block:
     - name: Get GPU render device
       ansible.builtin.shell: |
+        set -o pipefail
         ls -la /dev/dri/renderD* 2>/dev/null | head -1 | awk '{print $NF}'
       register: gpu_render_device
       delegate_to: "{{ proxmox_host }}"
@@ -45,6 +48,7 @@
 
     - name: Get GPU card device
       ansible.builtin.shell: |
+        set -o pipefail
         ls -la /dev/dri/card* 2>/dev/null | head -1 | awk '{print $NF}'
       register: gpu_card_device
       delegate_to: "{{ proxmox_host }}"
@@ -52,6 +56,7 @@
 
     - name: Get render device major:minor
       ansible.builtin.shell: |
+        set -o pipefail
         stat -c '0x%t 0x%T' {{ gpu_render_device.stdout }} | xargs printf '%d:%d\n'
       register: render_majmin
       delegate_to: "{{ proxmox_host }}"
@@ -60,6 +65,7 @@
 
     - name: Get card device major:minor
       ansible.builtin.shell: |
+        set -o pipefail
         stat -c '0x%t 0x%T' {{ gpu_card_device.stdout }} | xargs printf '%d:%d\n'
       register: card_majmin
       delegate_to: "{{ proxmox_host }}"
@@ -109,6 +115,9 @@
   ansible.builtin.command:
     cmd: "pct start {{ media_lxc_id }}"
   delegate_to: "{{ proxmox_host }}"
+  register: start_media_lxc
+  failed_when: start_media_lxc.rc != 0 and "is already running" not in start_media_lxc.stderr
+  changed_when: start_media_lxc.rc == 0
 
 - name: Wait for LXC to start
   ansible.builtin.pause:

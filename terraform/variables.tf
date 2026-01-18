@@ -136,6 +136,35 @@ variable "media_lxc_disk_size" {
   default     = 50
 }
 
+
+# =============================================================================
+# Traefik LXC Configuration
+# =============================================================================
+
+variable "traefik_lxc_id" {
+  description = "Traefik LXC container ID"
+  type        = number
+  default     = 202
+}
+
+variable "traefik_lxc_ip" {
+  description = "Traefik LXC static IP with CIDR"
+  type        = string
+  default     = "192.168.0.254/24"
+}
+
+variable "traefik_lxc_cores" {
+  description = "Traefik LXC CPU cores"
+  type        = number
+  default     = 2
+}
+
+variable "traefik_lxc_memory" {
+  description = "Traefik LXC memory in MB"
+  type        = number
+  default     = 2048
+}
+
 # =============================================================================
 # Bitwarden Secret IDs for Ansible
 # =============================================================================

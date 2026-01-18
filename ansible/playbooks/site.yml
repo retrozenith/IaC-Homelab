@@ -1,4 +1,5 @@
 ---
 # Site playbook - runs both storage and media-stack in order
-- import_playbook: storage.yml
-- import_playbook: media-stack.yml
+- import_playbook: storage.yml # noqa: name[play]
+- import_playbook: traefik.yml # noqa: name[play]
+- import_playbook: media-stack.yml # noqa: name[play]

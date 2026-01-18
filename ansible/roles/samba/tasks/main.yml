@@ -44,6 +44,7 @@
 
 - name: Create Samba users with password from Bitwarden
   ansible.builtin.shell: |
+    set -o pipefail
     (echo "{{ smb_media_password }}"; echo "{{ smb_media_password }}") | smbpasswd -a -s {{ item.name }}
   loop: "{{ smb_users }}"
   no_log: true

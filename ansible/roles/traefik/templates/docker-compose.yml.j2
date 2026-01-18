@@ -1,0 +1,26 @@
+services:
+  traefik:
+    image: traefik:v3.3
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080" # Dashboard
+    environment:
+      - CF_DNS_API_TOKEN={{ cloudflare_api_token | default('') }}
+      - CF_ZONE_API_TOKEN={{ cloudflare_api_token | default('') }}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - /opt/traefik/config:/etc/traefik/config:ro
+      - /opt/traefik/acme.json:/etc/traefik/acme.json
+      - /var/log/traefik:/var/log/traefik
+    networks:
+      - reverse-proxy
+
+networks:
+  reverse-proxy:
+    external: true

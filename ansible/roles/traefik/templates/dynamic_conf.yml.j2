@@ -1,0 +1,31 @@
+http:
+  routers:
+    jellyfin:
+      rule: "Host(`jf.{{ domain_name }}`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+      service: jellyfin
+      tls:
+        certResolver: cloudflare
+
+  middlewares:
+    security-headers:
+      headers:
+        sslRedirect: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        frameDeny: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customFrameOptionsValue: "SAMEORIGIN"
+
+  services:
+    jellyfin:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.100:8096"
+        passHostHeader: true

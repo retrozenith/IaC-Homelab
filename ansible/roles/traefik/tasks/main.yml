@@ -1,0 +1,44 @@
+---
+- name: Create Traefik directory structure
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /opt/traefik
+    - /opt/traefik/config # For dynamic config files
+    - /var/log/traefik # Logs directory
+
+- name: Create acme.json file
+  ansible.builtin.file:
+    path: /opt/traefik/acme.json
+    state: touch
+    mode: "0600"
+  changed_when: false
+
+- name: Deploy traefik.yml (static config)
+  ansible.builtin.template:
+    src: traefik.yml.j2
+    dest: /opt/traefik/traefik.yml
+    mode: "0644"
+  notify: Restart Traefik
+
+- name: Deploy dynamic config
+  ansible.builtin.template:
+    src: dynamic_conf.yml.j2
+    dest: /opt/traefik/config/dynamic_conf.yml
+    mode: "0644"
+  notify: Restart Traefik
+
+- name: Deploy docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /opt/traefik/docker-compose.yml
+    mode: "0644"
+  notify: Restart Traefik
+
+- name: Ensure Traefik is running
+  community.docker.docker_compose_v2:
+    project_src: /opt/traefik
+    state: present
+    pull: always
