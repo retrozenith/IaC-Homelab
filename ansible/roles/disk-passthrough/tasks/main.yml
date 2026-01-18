@@ -64,4 +64,5 @@
       ansible.builtin.fail:
         msg: "Disk passthrough configuration failed. Check disk availability and permissions on Proxmox host."
 
-- meta: flush_handlers
+- name: Flush handlers to apply changes
+  ansible.builtin.meta: flush_handlers
