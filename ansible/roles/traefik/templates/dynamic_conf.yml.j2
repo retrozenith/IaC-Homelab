@@ -20,6 +20,16 @@ http:
       tls:
         certResolver: cloudflare
 
+    vaultwarden:
+      rule: "Host(`vaultwarden.{{ domain_name }}`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+      service: vaultwarden
+      tls:
+        certResolver: cloudflare
+
     streamystats:
       rule: "Host(`streamystats.{{ domain_name }}`)"
       entryPoints:
@@ -63,13 +73,20 @@ http:
     jellyseerr:
       loadBalancer:
         servers:
-          - url: "http://192.168.0.100:5055"
+          # Was 192.168.0.100 hardcoded in previous view, replacing with variable properly
+          - url: "http://{{ hostvars['docker-services']['ansible_host'] | default('192.168.0.100') }}:5055"
+        passHostHeader: true
+
+    vaultwarden:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['docker-services']['ansible_host'] | default('192.168.0.100') }}:8222"
         passHostHeader: true
 
     streamystats:
       loadBalancer:
         servers:
-          - url: "http://192.168.0.100:3000"
+          - url: "http://{{ hostvars['docker-services']['ansible_host'] | default('192.168.0.100') }}:3000"
         passHostHeader: true
 
     grafana:

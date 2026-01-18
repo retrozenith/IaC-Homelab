@@ -44,9 +44,4 @@
   post_tasks:
     - name: Display access information
       ansible.builtin.debug:
-        msg: |
-          Traefik Proxy deployed successfully!
-
-          Dashboard: http://{{ ansible_host }}:8080
-          HTTP:      http://{{ ansible_host }}:80
-          HTTPS:     http://{{ ansible_host }}:443
+        msg: Traefik Proxy deployed successfully!

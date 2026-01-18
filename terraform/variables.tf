@@ -97,41 +97,41 @@ variable "storage_lxc_memory" {
 }
 
 # =============================================================================
-# Media Stack LXC Configuration
+# Docker Services LXC Configuration
 # =============================================================================
 
-variable "media_lxc_id" {
-  description = "Media Stack LXC container ID"
+variable "docker_services_lxc_id" {
+  description = "Docker Services LXC container ID"
   type        = number
   default     = 201
 }
 
-variable "media_lxc_ip" {
-  description = "Media Stack LXC static IP with CIDR"
+variable "docker_services_lxc_ip" {
+  description = "Docker Services LXC static IP with CIDR"
   type        = string
   default     = "192.168.0.100/24"
 }
 
-variable "media_lxc_cores" {
-  description = "Media Stack LXC CPU cores"
+variable "docker_services_lxc_cores" {
+  description = "Docker Services LXC CPU cores"
   type        = number
   default     = 4
 }
 
-variable "media_lxc_memory" {
-  description = "Media Stack LXC memory in MB"
+variable "docker_services_lxc_memory" {
+  description = "Docker Services LXC memory in MB"
   type        = number
   default     = 8192
 }
 
-variable "media_lxc_swap" {
-  description = "Media Stack LXC swap in MB"
+variable "docker_services_lxc_swap" {
+  description = "Docker Services LXC swap in MB"
   type        = number
   default     = 2048
 }
 
-variable "media_lxc_disk_size" {
-  description = "Media Stack LXC root disk size in GB"
+variable "docker_services_lxc_disk_size" {
+  description = "Docker Services LXC root disk size in GB"
   type        = number
   default     = 50
 }

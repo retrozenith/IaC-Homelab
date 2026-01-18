@@ -118,12 +118,12 @@ resource "proxmox_virtual_environment_container" "storage" {
 }
 
 # =============================================================================
-# Media Stack LXC - Docker services
+# Docker Services LXC - Docker services
 # =============================================================================
-resource "proxmox_virtual_environment_container" "media_stack" {
+resource "proxmox_virtual_environment_container" "docker_services" {
   node_name   = var.proxmox_node
-  vm_id       = var.media_lxc_id
-  description = "<b>Media Stack LXC</b> - Docker services for media management<br><br><b>Services:</b><br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:8096' target='_blank'>Jellyfin</a> :8096<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:5055' target='_blank'>Jellyseerr</a> :5055<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:3000' target='_blank'>StreamyStats</a> :3000<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:8989' target='_blank'>Sonarr</a> :8989<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:7878' target='_blank'>Radarr</a> :7878<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:9696' target='_blank'>Prowlarr</a> :9696<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:6868' target='_blank'>Profilarr</a> :6868<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:8080' target='_blank'>qBittorrent</a> :8080<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:7476' target='_blank'>Qui</a> :7476 (qBittorrent UI)"
+  vm_id       = var.docker_services_lxc_id
+  description = "<b>Docker Services LXC</b> - Docker services for media management<br><br><b>Services:</b><br>• <a href='http://${split("/", var.docker_services_lxc_ip)[0]}:8096' target='_blank'>Jellyfin</a> :8096<br>• <a href='http://${split("/", var.docker_services_lxc_ip)[0]}:5055' target='_blank'>Jellyseerr</a> :5055<br>• <a href='http://${split("/", var.docker_services_lxc_ip)[0]}:3000' target='_blank'>StreamyStats</a> :3000<br>• <a href='http://${split("/", var.docker_services_lxc_ip)[0]}:8989' target='_blank'>Sonarr</a> :8989<br>• <a href='http://${split("/", var.docker_services_lxc_ip)[0]}:7878' target='_blank'>Radarr</a> :7878<br>• <a href='http://${split("/", var.docker_services_lxc_ip)[0]}:9696' target='_blank'>Prowlarr</a> :9696<br>• <a href='http://${split("/", var.docker_services_lxc_ip)[0]}:6868' target='_blank'>Profilarr</a> :6868<br>• <a href='http://${split("/", var.docker_services_lxc_ip)[0]}:8080' target='_blank'>qBittorrent</a> :8080<br>• <a href='http://${split("/", var.docker_services_lxc_ip)[0]}:7476' target='_blank'>Qui</a> :7476 (qBittorrent UI)"
 
   depends_on = [proxmox_virtual_environment_container.storage]
 
@@ -133,11 +133,11 @@ resource "proxmox_virtual_environment_container" "media_stack" {
   }
 
   initialization {
-    hostname = "media-stack"
+    hostname = "docker-services"
 
     ip_config {
       ipv4 {
-        address = var.media_lxc_ip
+        address = var.docker_services_lxc_ip
         gateway = var.lxc_gateway
       }
     }
@@ -154,17 +154,17 @@ resource "proxmox_virtual_environment_container" "media_stack" {
   }
 
   cpu {
-    cores = var.media_lxc_cores
+    cores = var.docker_services_lxc_cores
   }
 
   memory {
-    dedicated = var.media_lxc_memory
-    swap      = var.media_lxc_swap
+    dedicated = var.docker_services_lxc_memory
+    swap      = var.docker_services_lxc_swap
   }
 
   disk {
     datastore_id = var.lxc_storage
-    size         = var.media_lxc_disk_size
+    size         = var.docker_services_lxc_disk_size
   }
 
   network_interface {
@@ -320,7 +320,7 @@ resource "proxmox_virtual_environment_container" "monitoring" {
 resource "null_resource" "wait_for_lxc" {
   depends_on = [
     proxmox_virtual_environment_container.storage,
-    proxmox_virtual_environment_container.media_stack,
+    proxmox_virtual_environment_container.docker_services,
     proxmox_virtual_environment_container.traefik,
     proxmox_virtual_environment_container.monitoring
   ]

@@ -1,6 +1,6 @@
 ---
-- name: Deploy Media Stack
-  hosts: media
+- name: Deploy Docker Services
+  hosts: docker-services
   become: true
   gather_facts: false
 
@@ -41,22 +41,10 @@
     - role: node-exporter
       tags: [monitoring, node-exporter]
 
-    - role: media-stack
-      tags: [media-stack, deploy]
+    - role: docker-services
+      tags: [docker-services, deploy]
 
   post_tasks:
     - name: Display access information
       ansible.builtin.debug:
-        msg: |
-          Media Stack deployed successfully!
-
-          Access your services at:
-          - Jellyfin:     http://{{ ansible_host }}:8096
-          - Jellyseerr:   http://{{ ansible_host }}:5055
-          - Radarr:       http://{{ ansible_host }}:7878
-          - Sonarr:       http://{{ ansible_host }}:8989
-          - Prowlarr:     http://{{ ansible_host }}:9696
-          - qBittorrent:  http://{{ ansible_host }}:8080
-          - StreamyStats: http://{{ ansible_host }}:3000
-
-          Storage mounted from: {{ storage_server | default('192.168.0.101') }}
+        msg: Docker Services deployed successfully!

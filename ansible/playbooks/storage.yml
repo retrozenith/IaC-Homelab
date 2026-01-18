@@ -41,17 +41,4 @@
   post_tasks:
     - name: Display storage information
       ansible.builtin.debug:
-        msg: |
-          Storage Server deployed successfully!
-
-          SMB Shares available at:
-          - \\{{ ansible_host }}\media
-          - \\{{ ansible_host }}\downloads
-          - \\{{ ansible_host }}\backups
-
-          {% if (storage_disks | default([])) | length > 0 %}
-          Mounted disks:
-          {% for disk in storage_disks %}
-          - {{ disk.device }} -> /mnt/disks/{{ disk.label }}
-          {% endfor %}
-          {% endif %}
+        msg: Storage Server deployed successfully!

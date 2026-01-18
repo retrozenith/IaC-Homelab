@@ -66,8 +66,8 @@ site:
 storage:
 	cd ansible && ansible-playbook playbooks/storage.yml
 
-media:
-	cd ansible && ansible-playbook playbooks/media-stack.yml
+docker-services:
+	cd ansible && ansible-playbook playbooks/docker-services.yml
 
 traefik:
 	cd ansible && ansible-playbook playbooks/traefik.yml

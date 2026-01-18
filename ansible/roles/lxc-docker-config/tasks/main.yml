@@ -2,21 +2,21 @@
 # This role configures the media stack LXC for Docker and optional GPU support
 # Runs on the Proxmox host to enable privileged mode and features
 
-- name: Stop media stack LXC
+- name: Stop Docker Services LXC
   ansible.builtin.command:
-    cmd: "pct stop {{ media_lxc_id }}"
+    cmd: "pct stop {{ docker_services_lxc_id }}"
   delegate_to: "{{ proxmox_host }}"
-  register: stop_media_lxc
-  failed_when: stop_media_lxc.rc != 0 and "is not running" not in stop_media_lxc.stderr
-  changed_when: stop_media_lxc.rc == 0
+  register: stop_lxc
+  failed_when: stop_lxc.rc != 0 and "is not running" not in stop_lxc.stderr
+  changed_when: stop_lxc.rc == 0
 
 - name: Wait for LXC to stop
   ansible.builtin.pause:
     seconds: 5
 
-- name: Enable privileged mode for media stack LXC
+- name: Enable privileged mode for Docker Services LXC
   ansible.builtin.lineinfile:
-    path: "/etc/pve/lxc/{{ media_lxc_id }}.conf"
+    path: "/etc/pve/lxc/{{ docker_services_lxc_id }}.conf"
     regexp: "^unprivileged:"
     line: "unprivileged: 0"
     state: present
@@ -24,7 +24,7 @@
 
 - name: Enable nesting feature
   ansible.builtin.lineinfile:
-    path: "/etc/pve/lxc/{{ media_lxc_id }}.conf"
+    path: "/etc/pve/lxc/{{ docker_services_lxc_id }}.conf"
     regexp: "^features:"
     line: "features: nesting=1,fuse=1"
     state: present
@@ -33,14 +33,14 @@
 # TUN device for Gluetun VPN
 - name: Add TUN device access for VPN
   ansible.builtin.lineinfile:
-    path: "/etc/pve/lxc/{{ media_lxc_id }}.conf"
+    path: "/etc/pve/lxc/{{ docker_services_lxc_id }}.conf"
     line: "lxc.cgroup2.devices.allow: c 10:200 rwm"
     state: present
   delegate_to: "{{ proxmox_host }}"
 
 - name: Mount TUN device in LXC
   ansible.builtin.lineinfile:
-    path: "/etc/pve/lxc/{{ media_lxc_id }}.conf"
+    path: "/etc/pve/lxc/{{ docker_services_lxc_id }}.conf"
     line: "lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file 0 0"
     state: present
   delegate_to: "{{ proxmox_host }}"
@@ -89,7 +89,7 @@
 
     - name: Add GPU device passthrough (render)
       ansible.builtin.lineinfile:
-        path: "/etc/pve/lxc/{{ media_lxc_id }}.conf"
+        path: "/etc/pve/lxc/{{ docker_services_lxc_id }}.conf"
         line: "lxc.cgroup2.devices.allow: c {{ render_majmin.stdout }} rwm"
         state: present
       delegate_to: "{{ proxmox_host }}"
@@ -97,7 +97,7 @@
 
     - name: Add GPU device passthrough (card)
       ansible.builtin.lineinfile:
-        path: "/etc/pve/lxc/{{ media_lxc_id }}.conf"
+        path: "/etc/pve/lxc/{{ docker_services_lxc_id }}.conf"
         line: "lxc.cgroup2.devices.allow: c {{ card_majmin.stdout }} rwm"
         state: present
       delegate_to: "{{ proxmox_host }}"
@@ -105,7 +105,7 @@
 
     - name: Mount GPU render device in LXC
       ansible.builtin.lineinfile:
-        path: "/etc/pve/lxc/{{ media_lxc_id }}.conf"
+        path: "/etc/pve/lxc/{{ docker_services_lxc_id }}.conf"
         line: "lxc.mount.entry: {{ gpu_render_device.stdout }} dev/dri/renderD128 none bind,optional,create=file 0 0"
         state: present
       delegate_to: "{{ proxmox_host }}"
@@ -113,7 +113,7 @@
 
     - name: Mount GPU card device in LXC
       ansible.builtin.lineinfile:
-        path: "/etc/pve/lxc/{{ media_lxc_id }}.conf"
+        path: "/etc/pve/lxc/{{ docker_services_lxc_id }}.conf"
         line: "lxc.mount.entry: {{ gpu_card_device.stdout }} dev/dri/card0 none bind,optional,create=file 0 0"
         state: present
       delegate_to: "{{ proxmox_host }}"
@@ -135,13 +135,13 @@
       ansible.builtin.fail:
         msg: "GPU passthrough configuration failed. Check GPU device availability on Proxmox host."
 
-- name: Start media stack LXC
+- name: Start Docker Services LXC
   ansible.builtin.command:
-    cmd: "pct start {{ media_lxc_id }}"
+    cmd: "pct start {{ docker_services_lxc_id }}"
   delegate_to: "{{ proxmox_host }}"
-  register: start_media_lxc
-  failed_when: start_media_lxc.rc != 0 and "is already running" not in start_media_lxc.stderr
-  changed_when: start_media_lxc.rc == 0
+  register: start_lxc
+  failed_when: start_lxc.rc != 0 and "is already running" not in start_lxc.stderr
+  changed_when: start_lxc.rc == 0
 
 - name: Wait for LXC to start
   ansible.builtin.pause:

@@ -7,7 +7,7 @@
   environment:
     DEBIAN_FRONTEND: noninteractive
 
-- name: Create media-stack directory
+- name: Create docker-services directory
   ansible.builtin.file:
     path: "{{ docker_compose_path }}"
     state: directory
@@ -21,6 +21,7 @@
   loop:
     - jellyfin
     - jellyseerr
+    - vaultwarden
     - streamystats
     - radarr
     - sonarr
@@ -35,14 +36,36 @@
     src: docker-compose.yml.j2
     dest: "{{ docker_compose_path }}/docker-compose.yml"
     mode: "0644"
-  notify: Restart media stack
+  notify: Restart docker-services
 
 - name: Template environment file
   ansible.builtin.template:
     src: .env.j2
     dest: "{{ docker_compose_path }}/.env"
     mode: "0600"
-  notify: Restart media stack
+  notify: Restart docker-services
+
+- name: Remove conflicting containers (migration cleanup)
+  community.docker.docker_container:
+    name: "{{ item }}"
+    state: absent
+    force_kill: true
+  loop:
+    - jellyfin
+    - jellyseerr
+    - vaultwarden
+    - streamystats
+    - radarr
+    - sonarr
+    - prowlarr
+    - profilarr
+    - qbittorrent
+    - gluetun
+    - qui
+    - flaresolverr
+    - cadvisor
+  ignore_errors: true
+  tags: [cleanup]
 
 - name: Pull Docker images
   community.docker.docker_compose_v2:

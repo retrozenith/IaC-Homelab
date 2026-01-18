@@ -13,17 +13,17 @@ output "storage_lxc_ip" {
 }
 
 # =============================================================================
-# Media Stack LXC Outputs
+# Docker Services LXC Outputs
 # =============================================================================
 
-output "media_lxc_id" {
-  description = "Media Stack LXC container ID"
-  value       = proxmox_virtual_environment_container.media_stack.vm_id
+output "docker_services_lxc_id" {
+  description = "Docker Services LXC container ID"
+  value       = proxmox_virtual_environment_container.docker_services.vm_id
 }
 
-output "media_lxc_ip" {
-  description = "Media Stack LXC IP address"
-  value       = split("/", var.media_lxc_ip)[0]
+output "docker_services_lxc_ip" {
+  description = "Docker Services LXC IP address"
+  value       = split("/", var.docker_services_lxc_ip)[0]
 }
 
 # =============================================================================
@@ -86,10 +86,10 @@ output "ansible_inventory" {
               ansible_host: ${split("/", var.storage_lxc_ip)[0]}
               ansible_user: root
               ansible_python_interpreter: /usr/bin/python3
-        media:
+        docker_services:
           hosts:
-            media-stack:
-              ansible_host: ${split("/", var.media_lxc_ip)[0]}
+            docker-services:
+              ansible_host: ${split("/", var.docker_services_lxc_ip)[0]}
               ansible_user: root
               ansible_python_interpreter: /usr/bin/python3
               storage_server: ${split("/", var.storage_lxc_ip)[0]}

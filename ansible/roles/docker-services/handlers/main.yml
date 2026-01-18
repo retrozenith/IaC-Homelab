@@ -1,5 +1,5 @@
 ---
-- name: Restart media stack
+- name: Restart docker-services
   community.docker.docker_compose_v2:
     project_src: "{{ docker_compose_path }}"
     state: restarted

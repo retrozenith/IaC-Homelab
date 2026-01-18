@@ -10,7 +10,7 @@ gpu_passthrough: true # Enable GPU passthrough for Jellyfin hardware transcoding
 # =============================================================================
 proxmox_host: "pve01" # Must match inventory hostname
 storage_lxc_id: 200
-media_lxc_id: 201
+docker_services_lxc_id: 201
 traefik_lxc_id: 202
 monitoring_lxc_id: 203
 
@@ -46,9 +46,9 @@ smb_users:
   - name: media
 
 # =============================================================================
-# Media Stack LXC Configuration
+# Docker Services LXC Configuration
 # =============================================================================
-docker_compose_path: /opt/media-stack
+docker_compose_path: /opt/docker-services
 puid: 1000
 pgid: 1000
 
@@ -61,7 +61,7 @@ smb_mounts:
     dest: /mnt/downloads
 
 media_dirs:
-  config: /opt/media-stack/config
+  config: /opt/docker-services/config
   media: /mnt/media
   torrents: /mnt/downloads
   transcodes: /tmp/jellyfin-transcodes

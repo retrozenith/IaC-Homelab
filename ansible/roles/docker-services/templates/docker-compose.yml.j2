@@ -1,4 +1,22 @@
 services:
+  # === MISCELLANEOUS ===
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - reverse-proxy
+    ports:
+      - "8222:80"
+    volumes:
+      - {{ media_dirs.config }}/vaultwarden:/data
+    environment:
+      DOMAIN: "https://vaultwarden.{{ domain_name }}"
+      SIGNUPS_ALLOWED: "false"
+      TZ: ${TZ}
+
   # === MEDIA SERVERS ===
   jellyfin:
     image: jellyfin/jellyfin:latest
