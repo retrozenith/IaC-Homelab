@@ -30,9 +30,9 @@ jobs:
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
           working_directory: terraform
-          soft_fail: true  # Don't fail the job, just report
+          soft_fail: true
           format: sarif
-          sarif_file: tfsec-results.sarif
+          additional_args: --out tfsec-results.sarif
 
       - name: Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v4
