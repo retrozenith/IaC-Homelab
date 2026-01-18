@@ -138,11 +138,11 @@ services:
       PGID: ${PGID}
       TZ: ${TZ}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7878/api/v3/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:7878/ping"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 60s
 
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
@@ -164,11 +164,11 @@ services:
       PGID: ${PGID}
       TZ: ${TZ}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8989/api/v3/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8989/ping"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 60s
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
@@ -187,11 +187,11 @@ services:
       PGID: ${PGID}
       TZ: ${TZ}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9696/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:9696/ping"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 60s
 
   profilarr:
     image: santiagosayshey/profilarr:latest
