@@ -8,6 +8,14 @@
     - /opt/traefik
     - /opt/traefik/config # For dynamic config files
     - /var/log/traefik # Logs directory
+    - /opt/traefik/fail2ban # Fail2Ban config
+
+- name: Copy Fail2Ban configuration
+  ansible.builtin.copy:
+    src: fail2ban/
+    dest: /opt/traefik/fail2ban/
+    mode: "0644"
+  notify: Restart Traefik
 
 - name: Create acme.json file
   ansible.builtin.file:
