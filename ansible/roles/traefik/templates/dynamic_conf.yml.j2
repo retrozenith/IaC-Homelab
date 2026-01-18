@@ -10,6 +10,26 @@ http:
       tls:
         certResolver: cloudflare
 
+    jellyseerr:
+      rule: "Host(`request.{{ domain_name }}`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+      service: jellyseerr
+      tls:
+        certResolver: cloudflare
+
+    streamystats:
+      rule: "Host(`streamystats.{{ domain_name }}`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+      service: streamystats
+      tls:
+        certResolver: cloudflare
+
   middlewares:
     security-headers:
       headers:
@@ -28,4 +48,16 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.0.100:8096"
+        passHostHeader: true
+
+    jellyseerr:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.100:5055"
+        passHostHeader: true
+
+    streamystats:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.100:3000"
         passHostHeader: true
