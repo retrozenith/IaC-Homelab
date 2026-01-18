@@ -54,7 +54,7 @@ provider "proxmox" {
 resource "proxmox_virtual_environment_container" "storage" {
   node_name   = var.proxmox_node
   vm_id       = var.storage_lxc_id
-  description = "Storage LXC - Samba file server for media and general storage"
+  description = "<b>Storage LXC</b> - Samba file server for media and general storage<br><br><b>Shares:</b><br>• <code>&#92;&#92;${split("/", var.storage_lxc_ip)[0]}&#92;media</code><br>• <code>&#92;&#92;${split("/", var.storage_lxc_ip)[0]}&#92;downloads</code><br>• <code>&#92;&#92;${split("/", var.storage_lxc_ip)[0]}&#92;backups</code><br><br><b>macOS/Linux:</b> <code>smb://${split("/", var.storage_lxc_ip)[0]}</code>"
 
   operating_system {
     template_file_id = var.lxc_template
@@ -123,7 +123,7 @@ resource "proxmox_virtual_environment_container" "storage" {
 resource "proxmox_virtual_environment_container" "media_stack" {
   node_name   = var.proxmox_node
   vm_id       = var.media_lxc_id
-  description = "Media Stack LXC - Jellyfin, *arr suite, qBittorrent"
+  description = "<b>Media Stack LXC</b> - Docker services for media management<br><br><b>Services:</b><br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:8096' target='_blank'>Jellyfin</a> :8096<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:5055' target='_blank'>Jellyseerr</a> :5055<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:3000' target='_blank'>StreamyStats</a> :3000<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:8989' target='_blank'>Sonarr</a> :8989<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:7878' target='_blank'>Radarr</a> :7878<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:9696' target='_blank'>Prowlarr</a> :9696<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:6868' target='_blank'>Profilarr</a> :6868<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:8080' target='_blank'>qBittorrent</a> :8080<br>• <a href='http://${split("/", var.media_lxc_ip)[0]}:7476' target='_blank'>Qui</a> :7476 (qBittorrent UI)"
 
   depends_on = [proxmox_virtual_environment_container.storage]
 
@@ -191,7 +191,7 @@ resource "proxmox_virtual_environment_container" "media_stack" {
 resource "proxmox_virtual_environment_container" "traefik" {
   node_name   = var.proxmox_node
   vm_id       = var.traefik_lxc_id
-  description = "Traefik LXC - Reverse Proxy"
+  description = "<b>Traefik LXC</b> - Reverse Proxy with automatic SSL<br><br><b>Services:</b><br>• <a href='http://${split("/", var.traefik_lxc_ip)[0]}:8080' target='_blank'>Dashboard</a> :8080"
 
   operating_system {
     template_file_id = var.lxc_template
