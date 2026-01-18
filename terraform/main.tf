@@ -317,6 +317,7 @@ resource "proxmox_virtual_environment_container" "monitoring" {
 }
 
 # Wait for LXCs to be ready
+# We sleep to ensure the LXC networking stack is fully up before Ansible tries to connect
 resource "null_resource" "wait_for_lxc" {
   depends_on = [
     proxmox_virtual_environment_container.storage,
