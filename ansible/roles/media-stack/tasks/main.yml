@@ -1,4 +1,12 @@
 ---
+- name: Install intel-gpu-tools # Helps with debugging GPU passthrough and tracking usage by Services (intel_gpu_top)
+  ansible.builtin.apt:
+    name: intel-gpu-tools
+    state: present
+    update_cache: true
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
 - name: Create media-stack directory
   ansible.builtin.file:
     path: "{{ docker_compose_path }}"
