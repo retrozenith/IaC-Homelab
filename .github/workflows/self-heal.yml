@@ -72,8 +72,8 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/andromeda_deploy
+          chmod 600 ~/.ssh/andromeda_deploy
           ssh-keyscan -H 192.168.0.100 >> ~/.ssh/known_hosts 2>/dev/null || true
           ssh-keyscan -H 192.168.0.101 >> ~/.ssh/known_hosts 2>/dev/null || true
           ssh-keyscan -H 192.168.0.102 >> ~/.ssh/known_hosts 2>/dev/null || true
