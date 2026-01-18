@@ -3,3 +3,7 @@
 monitoring_stack_path: /opt/monitoring
 monitoring_prometheus_retention: "15d"
 monitoring_grafana_admin_password: "admin" # Should be changed on first login
+
+# GitHub PAT for Alertmanager webhook (Bitwarden Secret ID)
+# Used to trigger self-heal GitHub Actions workflow
+monitoring_github_pat_secret_id: "81df8bbd-51a1-41a9-a9f2-b3d601306e5a" # gitleaks:allow

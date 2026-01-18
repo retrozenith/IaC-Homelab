@@ -1,0 +1,14 @@
+---
+# Self-heal handlers
+
+- name: Restart Docker
+  ansible.builtin.systemd:
+    name: docker
+    state: restarted
+  become: true
+
+- name: Restart Docker Compose stack
+  ansible.builtin.shell: |
+    cd {{ docker_compose_dir }} && docker compose up -d
+  become: true
+  when: docker_compose_dir is defined

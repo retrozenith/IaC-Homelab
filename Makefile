@@ -2,7 +2,8 @@
 # Common commands for Terraform and Ansible operations
 
 .PHONY: help init plan apply destroy lint test \
-        storage media traefik site \
+        storage media traefik site monitoring \
+        self-heal health-check \
         tf-init tf-plan tf-apply tf-destroy tf-fmt \
         pre-commit clean
 
@@ -74,6 +75,12 @@ traefik:
 
 monitoring:
 	cd ansible && ansible-playbook playbooks/monitoring.yml
+
+self-heal:
+	cd ansible && ansible-playbook playbooks/self-heal.yml
+
+health-check:
+	cd ansible && ansible-playbook playbooks/self-heal.yml --check -v
 
 # =============================================================================
 # Linting & Testing

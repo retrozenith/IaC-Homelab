@@ -17,6 +17,12 @@ services:
       SIGNUPS_ALLOWED: "false"
       TZ: ${TZ}
       ADMIN_TOKEN: ${ADMIN_TOKEN}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/alive"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # === MEDIA SERVERS ===
   jellyfin:
@@ -43,6 +49,12 @@ services:
       TZ: ${TZ}
       PUID: ${PUID}
       PGID: ${PGID}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8096/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   streamystats:
     image: docker.io/fredrikburmester/streamystats-v2-aio:latest
@@ -99,6 +111,12 @@ services:
       TZ: ${TZ}
       LOG_LEVEL: info
       PORT: "5055"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5055/api/v1/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # === MEDIA MANAGEMENT (ARR STACK) ===
   radarr:
@@ -119,6 +137,12 @@ services:
       PUID: ${PUID}
       PGID: ${PGID}
       TZ: ${TZ}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7878/api/v3/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
@@ -139,6 +163,12 @@ services:
       PUID: ${PUID}
       PGID: ${PGID}
       TZ: ${TZ}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8989/api/v3/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
@@ -156,6 +186,12 @@ services:
       PUID: ${PUID}
       PGID: ${PGID}
       TZ: ${TZ}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9696/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   profilarr:
     image: santiagosayshey/profilarr:latest
