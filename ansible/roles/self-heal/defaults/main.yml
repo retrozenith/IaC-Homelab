@@ -10,7 +10,9 @@ docker_services_to_check:
   - jellyseerr
   - vaultwarden
   - gluetun
-  - qbittorrent
+  - flaresolverr
+  # - qbittorrent  # Behind Gluetun VPN, can't check directly
+  # - profilarr    # Rarely used, config sync tool
 
 # Max container restart attempts before alerting
 max_restart_attempts: 3
