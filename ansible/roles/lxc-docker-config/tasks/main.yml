@@ -30,6 +30,21 @@
     state: present
   delegate_to: "{{ proxmox_host }}"
 
+# TUN device for Gluetun VPN
+- name: Add TUN device access for VPN
+  ansible.builtin.lineinfile:
+    path: "/etc/pve/lxc/{{ media_lxc_id }}.conf"
+    line: "lxc.cgroup2.devices.allow: c 10:200 rwm"
+    state: present
+  delegate_to: "{{ proxmox_host }}"
+
+- name: Mount TUN device in LXC
+  ansible.builtin.lineinfile:
+    path: "/etc/pve/lxc/{{ media_lxc_id }}.conf"
+    line: "lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file 0 0"
+    state: present
+  delegate_to: "{{ proxmox_host }}"
+
 # GPU Passthrough Configuration
 - name: Check if GPU passthrough is enabled
   ansible.builtin.set_fact:
