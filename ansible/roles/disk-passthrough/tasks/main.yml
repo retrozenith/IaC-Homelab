@@ -55,4 +55,13 @@
       notify: Restart storage LXC
       changed_when: true
 
+  rescue:
+    - name: Disk passthrough failed
+      ansible.builtin.debug:
+        msg: "Disk passthrough configuration failed: {{ ansible_failed_result.msg | default('Unknown error') }}"
+
+    - name: Fail with error details
+      ansible.builtin.fail:
+        msg: "Disk passthrough configuration failed. Check disk availability and permissions on Proxmox host."
+
 - meta: flush_handlers

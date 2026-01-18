@@ -111,6 +111,15 @@
           - Render: {{ gpu_render_device.stdout | default('not found') }}
           - Card: {{ gpu_card_device.stdout | default('not found') }}
 
+  rescue:
+    - name: GPU passthrough failed
+      ansible.builtin.debug:
+        msg: "GPU passthrough configuration failed: {{ ansible_failed_result.msg | default('Unknown error') }}"
+
+    - name: Fail with error details
+      ansible.builtin.fail:
+        msg: "GPU passthrough configuration failed. Check GPU device availability on Proxmox host."
+
 - name: Start media stack LXC
   ansible.builtin.command:
     cmd: "pct start {{ media_lxc_id }}"
