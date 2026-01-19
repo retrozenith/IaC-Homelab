@@ -1,0 +1,44 @@
+# Ansible-lint configuration
+---
+profile: production
+
+# Paths to exclude from linting
+exclude_paths:
+  - ../.git/
+  - ../.github/
+  - ../.terraform/
+  - "*.log"
+  - ../.ansible/
+
+# Skip certain rules for homelab patterns
+skip_list:
+  # Allow command/shell for certain homelab tasks
+  - command-instead-of-module
+  # Don't require handlers in every role
+  - no-handler
+  # Allow changed_when to be missing in specific cases
+  - no-changed-when
+  # Skip role name checks for local roles
+  - role-name
+
+# Warn instead of error for these
+warn_list:
+  - experimental
+  - fqcn[action-core]
+  - name[missing]
+  - schema[meta]
+
+# Enable offline mode (no galaxy dependencies)
+offline: false
+
+# Strict mode
+strict: false
+
+# Kinds mapping for playbooks (paths relative to ansible/)
+kinds:
+  - playbook: "playbooks/*.yml"
+  - tasks: "roles/*/tasks/*.yml"
+  - handlers: "roles/*/handlers/*.yml"
+  - vars: "group_vars/*.yml"
+  - vars: "roles/*/defaults/*.yml"
+  - vars: "roles/*/vars/*.yml"

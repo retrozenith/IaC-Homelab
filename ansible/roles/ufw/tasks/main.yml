@@ -1,0 +1,43 @@
+---
+- name: Install UFW
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Set UFW default policies
+  community.general.ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: incoming, policy: "{{ ufw_default_incoming_policy }}" }
+    - { direction: outgoing, policy: "{{ ufw_default_outgoing_policy }}" }
+  notify: Reload UFW
+
+- name: Enable IPv6 support in UFW
+  ansible.builtin.lineinfile:
+    path: /etc/default/ufw
+    regexp: "^IPV6="
+    line: "IPV6={{ ufw_ipv6 }}"
+  notify: Reload UFW
+
+- name: Allow SSH
+  community.general.ufw:
+    rule: allow
+    name: OpenSSH
+  when: ufw_allow_ssh
+
+- name: Debug ufw_allow_ports
+  ansible.builtin.debug:
+    var: ufw_allow_ports
+
+- name: Allow custom ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port | default(item) }}"
+    proto: "{{ item.proto | default('tcp') }}"
+  loop: "{{ ufw_allow_ports }}"
+  notify: Reload UFW
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled
