@@ -31,7 +31,7 @@ on:
         default: false
 
 env:
-  ANSIBLE_HOST_KEY_CHECKING: "false"
+  ANSIBLE_HOST_KEY_CHECKING: "true"
   ANSIBLE_FORCE_COLOR: "true"
 
 jobs:
@@ -57,7 +57,7 @@ jobs:
           sleep 10
           tailscale status
           echo "Testing connectivity to docker-services..."
-          ping -c 3 192.168.0.100 || echo "Ping failed, but SSH may still work"
+          ping -c 3 ${{ secrets.HOST_IP_DOCKER || '192.168.0.100' }} || echo "Ping failed, but SSH may still work"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -74,10 +74,8 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/andromeda_deploy
           chmod 600 ~/.ssh/andromeda_deploy
-          ssh-keyscan -H 192.168.0.100 >> ~/.ssh/known_hosts 2>/dev/null || true
-          ssh-keyscan -H 192.168.0.101 >> ~/.ssh/known_hosts 2>/dev/null || true
-          ssh-keyscan -H 192.168.0.102 >> ~/.ssh/known_hosts 2>/dev/null || true
-          ssh-keyscan -H 192.168.0.254 >> ~/.ssh/known_hosts 2>/dev/null || true
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
       - name: Determine target and playbook
         id: config
