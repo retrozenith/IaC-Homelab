@@ -45,7 +45,7 @@
 - name: Create Samba users with password from Bitwarden
   ansible.builtin.shell: |
     set -o pipefail
-    (echo "{{ smb_media_password }}"; echo "{{ smb_media_password }}") | smbpasswd -a -s {{ item.name }}
+    (echo "{{ lookup('vars', item.password_fact) }}"; echo "{{ lookup('vars', item.password_fact) }}") | smbpasswd -a -s {{ item.name }}
   loop: "{{ smb_users }}"
   no_log: true
   changed_when: true
@@ -63,3 +63,9 @@
   loop:
     - smbd
     - nmbd
+
+- name: Disable Samba AD DC service (not used)
+  ansible.builtin.systemd:
+    name: samba-ad-dc
+    state: stopped
+    enabled: false

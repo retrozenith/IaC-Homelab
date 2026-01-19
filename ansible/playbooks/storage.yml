@@ -32,6 +32,18 @@
     - role: common
       tags: [common, setup]
 
+    - role: ufw
+      tags: [firewall, setup]
+      vars:
+        ufw_allow_ports:
+          - 111
+          - 2049
+          - 445
+          - { port: 137, proto: udp }
+          - { port: 138, proto: udp }
+          - 139
+          - 9100
+
     - role: samba
       tags: [samba, storage]
 

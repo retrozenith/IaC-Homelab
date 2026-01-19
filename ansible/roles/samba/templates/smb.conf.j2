@@ -7,27 +7,30 @@
    log file = /var/log/samba/log.%m
    max log size = 1000
    logging = file
+   log level = 3
 
-   # Security
+   # Security - flexible for compat
    security = user
    map to guest = never
+   server smb encrypt = desired
+   server signing = auto
+
+   # SMB protocol
+   server min protocol = SMB2
+   server max protocol = SMB3
+
+   # Admin users
+   admin users = cvictor
 
    # Performance
-   socket options = TCP_NODELAY IPTOS_LOWDELAY SO_RCVBUF=131072 SO_SNDBUF=131072
    read raw = yes
    write raw = yes
    use sendfile = yes
    aio read size = 16384
    aio write size = 16384
 
-   # Apple/macOS compatibility
-   vfs objects = fruit streams_xattr
-   fruit:metadata = stream
-   fruit:model = MacSamba
-   fruit:posix_rename = yes
-   fruit:veto_appledouble = no
-   fruit:wipe_intentionally_left_blank_rfork = yes
-   fruit:delete_empty_adfiles = yes
+   # Apple/macOS compatibility defaults (can be overridden per share)
+   # vfs objects moved to specific shares to avoid conflicts with backups
 
 [media]
    path = {{ storage_base_path }}/media
@@ -39,6 +42,13 @@
    directory mask = 0775
    force user = nobody
    force group = nogroup
+   vfs objects = fruit streams_xattr
+   fruit:metadata = stream
+   fruit:model = MacSamba
+   fruit:posix_rename = yes
+   fruit:veto_appledouble = no
+   fruit:wipe_intentionally_left_blank_rfork = yes
+   fruit:delete_empty_adfiles = yes
 
 [downloads]
    path = {{ storage_base_path }}/downloads
@@ -50,6 +60,13 @@
    directory mask = 0775
    force user = nobody
    force group = nogroup
+   vfs objects = fruit streams_xattr
+   fruit:metadata = stream
+   fruit:model = MacSamba
+   fruit:posix_rename = yes
+   fruit:veto_appledouble = no
+   fruit:wipe_intentionally_left_blank_rfork = yes
+   fruit:delete_empty_adfiles = yes
 
 [backups]
    path = {{ storage_base_path }}/backups
@@ -59,5 +76,10 @@
    valid users = {{ smb_users | map(attribute='name') | join(', ') }}
    create mask = 0664
    directory mask = 0775
-   force user = nobody
-   force group = nogroup
+   #force user = nobody
+   #force group = nogroup
+   strict allocate = no
+   vfs objects = acl_xattr streams_xattr
+   map acl inherit = yes
+   store dos attributes = yes
+   nt acl support = yes

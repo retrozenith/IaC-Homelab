@@ -18,5 +18,12 @@
     - role: lxc-nesting
       tags: [setup, lxc]
     - common
+    - role: ufw
+      tags: [firewall]
+      vars:
+        ufw_allow_ports:
+          - 3000
+          - 9090
+          - 9093
     - docker
     - monitoring

@@ -32,6 +32,13 @@
     - role: common
       tags: [common, setup]
 
+    - role: ufw
+      tags: [firewall, setup]
+      vars:
+        ufw_allow_ports:
+          - 9100
+          - 8085
+
     - role: smb-client
       tags: [smb, storage]
 

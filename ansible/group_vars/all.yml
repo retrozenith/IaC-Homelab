@@ -30,6 +30,7 @@ mergerfs_mount_point: /srv/storage
 # Bitwarden Secrets Manager - Secret UUIDs
 # =============================================================================
 bw_secret_smb_password: "aba2bcf5-9e18-4f79-80f0-b3d50122f0ac" # gitleaks:allow
+bw_secret_smb_admin_password: "3dc1f91e-b1ca-424c-a569-b3d7010b1d88" # gitleaks:allow
 bw_secret_wireguard_key: "bc554d8d-307a-426c-9dd1-b3d501230784" # gitleaks:allow
 bw_secret_streamystats_db: "f56262c9-08eb-490d-9107-b3d5012326a2" # gitleaks:allow
 bw_secret_streamystats_session: "5e58708f-9298-4e8f-9574-b3d501234c29" # gitleaks:allow
@@ -48,6 +49,9 @@ storage_base_path: /srv/storage
 
 smb_users:
   - name: media
+    password_fact: smb_media_password
+  - name: cvictor
+    password_fact: smb_admin_password
 
 # =============================================================================
 # Docker Services LXC Configuration

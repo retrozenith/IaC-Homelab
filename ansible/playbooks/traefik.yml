@@ -32,6 +32,14 @@
     - role: common
       tags: [common, setup]
 
+    - role: ufw
+      tags: [firewall, setup]
+      vars:
+        ufw_allow_ports:
+          - 80
+          - 443
+          - 8080
+
     - role: docker
       tags: [docker, setup]
 
