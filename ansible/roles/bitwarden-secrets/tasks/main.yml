@@ -156,3 +156,58 @@
     vaultwarden_admin_token: "{{ vaultwarden_hash_result.stdout }}"
   no_log: true
   when: vaultwarden_hash_result is defined and vaultwarden_hash_result.stdout is defined
+
+- name: Fetch GitHub PAT from Bitwarden
+  ansible.builtin.command:
+    cmd: "bws secret get {{ bw_secret_github_pat }} --output json"
+  environment:
+    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
+  register: bw_pat_result
+  changed_when: false
+  no_log: true
+  become: false
+  when: bw_secret_github_pat is defined and bw_secret_github_pat != '' and 'PLACEHOLDER' not in bw_secret_github_pat
+
+- name: Set GitHub PAT fact
+  ansible.builtin.set_fact:
+    monitoring_github_pat: "{{ (bw_pat_result.stdout | from_json).value }}"
+  no_log: true
+- name: Set GitHub PAT fact
+  ansible.builtin.set_fact:
+    monitoring_github_pat: "{{ (bw_pat_result.stdout | from_json).value }}"
+  no_log: true
+  when: bw_pat_result is defined and bw_pat_result.stdout is defined
+
+- name: Fetch Traefik Auth from Bitwarden
+  ansible.builtin.command:
+    cmd: "bws secret get {{ bw_secret_traefik_auth }} --output json"
+  environment:
+    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
+  register: bw_traefik_result
+  changed_when: false
+  no_log: true
+  become: false
+  when: bw_secret_traefik_auth is defined and bw_secret_traefik_auth != ''
+
+- name: Set Traefik Auth fact
+  ansible.builtin.set_fact:
+    traefik_dashboard_auth: "{{ (bw_traefik_result.stdout | from_json).value }}"
+  no_log: true
+  when: bw_traefik_result is defined and bw_traefik_result.stdout is defined
+
+- name: Fetch Grafana Password from Bitwarden
+  ansible.builtin.command:
+    cmd: "bws secret get {{ bw_secret_grafana_password }} --output json"
+  environment:
+    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
+  register: bw_grafana_result
+  changed_when: false
+  no_log: true
+  become: false
+  when: bw_secret_grafana_password is defined and bw_secret_grafana_password != ''
+
+- name: Set Grafana Password fact
+  ansible.builtin.set_fact:
+    monitoring_grafana_admin_password: "{{ (bw_grafana_result.stdout | from_json).value }}"
+  no_log: true
+  when: bw_grafana_result is defined and bw_grafana_result.stdout is defined

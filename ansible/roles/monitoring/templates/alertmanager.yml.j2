@@ -28,7 +28,7 @@ receivers:
         http_config:
           authorization:
             type: Bearer
-            credentials: '{{ monitoring_github_pat }}'
+            credentials_file: /etc/alertmanager/secrets/github_pat
         send_resolved: true
         max_alerts: 10
 

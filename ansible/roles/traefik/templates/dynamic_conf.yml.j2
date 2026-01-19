@@ -6,6 +6,7 @@ http:
         - websecure
       middlewares:
         - security-headers
+        - ratelimit
       service: jellyfin
       tls:
         certResolver: cloudflare
@@ -16,6 +17,7 @@ http:
         - websecure
       middlewares:
         - security-headers
+        - ratelimit
       service: jellyseerr
       tls:
         certResolver: cloudflare
@@ -26,6 +28,7 @@ http:
         - websecure
       middlewares:
         - security-headers
+        - ratelimit
       service: vaultwarden
       tls:
         certResolver: cloudflare
@@ -36,6 +39,7 @@ http:
         - websecure
       middlewares:
         - security-headers
+        - ratelimit
       service: streamystats
       tls:
         certResolver: cloudflare
@@ -46,7 +50,20 @@ http:
         - websecure
       middlewares:
         - security-headers
+        - ratelimit
       service: grafana
+      tls:
+        certResolver: cloudflare
+
+    traefik:
+      rule: "Host(`traefik.{{ domain_name }}`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - auth
+        - ratelimit
+      service: api@internal
       tls:
         certResolver: cloudflare
 
@@ -62,6 +79,16 @@ http:
         frameDeny: true
         referrerPolicy: "strict-origin-when-cross-origin"
         customFrameOptionsValue: "SAMEORIGIN"
+
+    auth:
+      basicAuth:
+        users:
+          - "{{ traefik_dashboard_auth }}"
+
+    ratelimit:
+      rateLimit:
+        average: 100
+        burst: 50
 
   services:
     jellyfin:

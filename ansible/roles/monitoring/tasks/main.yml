@@ -13,6 +13,16 @@
     - "{{ monitoring_stack_path }}/grafana/provisioning/datasources"
     - "{{ monitoring_stack_path }}/grafana/provisioning/dashboards"
     - "{{ monitoring_stack_path }}/grafana/dashboards"
+    - "{{ monitoring_stack_path }}/alertmanager/secrets" # Secrets directory
+
+- name: Provision GitHub PAT secret
+  ansible.builtin.copy:
+    content: "{{ monitoring_github_pat }}"
+    dest: "{{ monitoring_stack_path }}/alertmanager/secrets/github_pat"
+    mode: "0600"
+    owner: "nobody" # Match Alertmanager user
+  when: monitoring_github_pat is defined
+  notify: Restart monitoring stack
 
 - name: Template Prometheus configuration
   ansible.builtin.template:

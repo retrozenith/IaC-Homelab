@@ -37,6 +37,9 @@ bw_secret_cloudflare_token: "04d2c6ad-0f4c-483b-9809-b3d600717e0a" # gitleaks:al
 bw_secret_domain_name: "21c4bd56-01d0-4c9c-8679-b3d60071ad6c" # gitleaks:allow
 bw_secret_le_email: "35b5881d-9726-422c-90e1-b3d60071c880" # gitleaks:allow
 bw_secret_vaultwarden_token: "e51dbb14-a89f-4500-b745-b3d600f45034" # gitleaks:allow
+bw_secret_github_pat: "81df8bbd-51a1-41a9-a9f2-b3d601306e5a" # gitleaks:allow
+bw_secret_traefik_auth: "63dda3de-f0eb-4a5f-bd35-b3d700e71850" # gitleaks:allow
+bw_secret_grafana_password: "8ba4de2f-d3e1-42dd-83df-b3d700e755c1" # gitleaks:allow
 
 # =============================================================================
 # Storage LXC Configuration

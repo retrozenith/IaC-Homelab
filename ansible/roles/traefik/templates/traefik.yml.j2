@@ -1,6 +1,7 @@
 api:
-  insecure: true
   dashboard: true
+  insecure: false
+  debug: false
 
 providers:
   docker:
@@ -22,6 +23,11 @@ entryPoints:
     address: ":443"
   metrics:
     address: ":8082"
+  dashboard:
+    address: ":8080"
+    http:
+      middlewares:
+        - auth
 
 certificatesResolvers:
   cloudflare:
@@ -35,6 +41,8 @@ certificatesResolvers:
           - "8.8.8.8:53"
 
 log:
+  filePath: "/var/log/traefik/api.log"
+  format: json
   level: INFO
 
 accessLog:
