@@ -1,0 +1,123 @@
+http:
+  routers:
+    jellyfin:
+      rule: "Host(`jf.{{ domain_name }}`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - ratelimit
+      service: jellyfin
+      tls:
+        certResolver: cloudflare
+
+    jellyseerr:
+      rule: "Host(`request.{{ domain_name }}`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - ratelimit
+      service: jellyseerr
+      tls:
+        certResolver: cloudflare
+
+    vaultwarden:
+      rule: "Host(`vault.{{ domain_name }}`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - ratelimit
+      service: vaultwarden
+      tls:
+        certResolver: cloudflare
+
+    streamystats:
+      rule: "Host(`streamystats.{{ domain_name }}`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - ratelimit
+      service: streamystats
+      tls:
+        certResolver: cloudflare
+
+    grafana:
+      rule: "Host(`monitoring.{{ domain_name }}`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - ratelimit
+      service: grafana
+      tls:
+        certResolver: cloudflare
+
+    traefik:
+      rule: "Host(`traefik.{{ domain_name }}`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - auth
+        - ratelimit
+      service: api@internal
+      tls:
+        certResolver: cloudflare
+
+  middlewares:
+    security-headers:
+      headers:
+        sslRedirect: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        frameDeny: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customFrameOptionsValue: "SAMEORIGIN"
+
+    auth:
+      basicAuth:
+        users:
+          - "{{ traefik_dashboard_auth }}"
+
+    ratelimit:
+      rateLimit:
+        average: 100
+        burst: 50
+
+  services:
+    jellyfin:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.100:8096"
+        passHostHeader: true
+
+    jellyseerr:
+      loadBalancer:
+        servers:
+          # Was 192.168.0.100 hardcoded in previous view, replacing with variable properly
+          - url: "http://{{ hostvars['docker-services']['ansible_host'] | default('192.168.0.100') }}:5055"
+        passHostHeader: true
+
+    vaultwarden:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['docker-services']['ansible_host'] | default('192.168.0.100') }}:8222"
+        passHostHeader: true
+
+    streamystats:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['docker-services']['ansible_host'] | default('192.168.0.100') }}:3000"
+        passHostHeader: true
+
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.102:3000"
+        passHostHeader: true

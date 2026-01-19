@@ -1,0 +1,73 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - /etc/prometheus/alert-rules.yml
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Local node_exporter (monitoring LXC)
+  - job_name: 'monitoring-node'
+    static_configs:
+      - targets: ['node_exporter:9100']
+        labels:
+          host: 'monitoring'
+
+  # Local cAdvisor (monitoring LXC containers)
+  - job_name: 'monitoring-cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          host: 'monitoring'
+
+  # Docker Services LXC
+  - job_name: 'docker-services-node'
+    static_configs:
+      - targets: ['{{ hostvars["docker-services"]["ansible_host"] | default("192.168.0.100") }}:9100']
+        labels:
+          host: 'docker-services'
+
+  # Docker Services cAdvisor
+  - job_name: 'docker-services-cadvisor'
+    static_configs:
+      - targets: ['{{ hostvars["docker-services"]["ansible_host"] | default("192.168.0.100") }}:8085']
+        labels:
+          host: 'docker-services'
+
+  # Storage LXC
+  - job_name: 'storage-node'
+    static_configs:
+      - targets: ['{{ hostvars["storage-lxc"]["ansible_host"] | default("192.168.0.101") }}:9100']
+        labels:
+          host: 'storage'
+
+  # Traefik LXC
+  - job_name: 'traefik-node'
+    static_configs:
+      - targets: ['{{ hostvars["traefik"]["ansible_host"] | default("192.168.0.254") }}:9100']
+        labels:
+          host: 'traefik'
+
+  # Proxmox Host (requires manual node_exporter install on PVE)
+  - job_name: 'proxmox-host'
+    static_configs:
+      - targets: ['192.168.0.26:9100']
+        labels:
+          host: 'pve01'
+
+  # Traefik Internal Metrics
+  - job_name: 'traefik'
+    static_configs:
+      - targets: ['{{ hostvars["traefik"]["ansible_host"] | default("192.168.0.254") }}:8082']
+        labels:
+          host: 'traefik-lxc'

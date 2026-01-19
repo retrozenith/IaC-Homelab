@@ -1,0 +1,86 @@
+---
+- name: Install intel-gpu-tools # Helps with debugging GPU passthrough and tracking usage by Services (intel_gpu_top)
+  ansible.builtin.apt:
+    name: intel-gpu-tools
+    state: present
+    update_cache: true
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: Create docker-services directory
+  ansible.builtin.file:
+    path: "{{ docker_compose_path }}"
+    state: directory
+    mode: "0755"
+
+- name: Create config directories for each service
+  ansible.builtin.file:
+    path: "{{ media_dirs.config }}/{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - jellyfin
+    - jellyseerr
+    - vaultwarden
+    - streamystats
+    - radarr
+    - sonarr
+    - prowlarr
+    - profilarr
+    - qbittorrent
+    - gluetun
+    - qui
+
+- name: Template docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ docker_compose_path }}/docker-compose.yml"
+    mode: "0644"
+  notify: Restart docker-services
+
+- name: Template environment file
+  ansible.builtin.template:
+    src: .env.j2
+    dest: "{{ docker_compose_path }}/.env"
+    mode: "0600"
+  notify: Restart docker-services
+
+- name: Remove admin_token from Vaultwarden config.json (allow ENV override)
+  ansible.builtin.lineinfile:
+    path: "{{ media_dirs.config }}/vaultwarden/config.json"
+    regexp: '^\s*"admin_token":'
+    state: absent
+  ignore_errors: true
+
+- name: Remove conflicting containers (migration cleanup)
+  community.docker.docker_container:
+    name: "{{ item }}"
+    state: absent
+    force_kill: true
+  loop:
+    - jellyfin
+    - jellyseerr
+    - vaultwarden
+    - streamystats
+    - radarr
+    - sonarr
+    - prowlarr
+    - profilarr
+    - qbittorrent
+    - gluetun
+    - qui
+    - flaresolverr
+    - cadvisor
+  ignore_errors: true
+  tags: [cleanup]
+
+- name: Pull Docker images
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_compose_path }}"
+    pull: missing
+    state: present
+
+- name: Start media stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_compose_path }}"
+    state: present

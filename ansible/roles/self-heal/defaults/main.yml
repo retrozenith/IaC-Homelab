@@ -1,0 +1,21 @@
+---
+# Self-heal role defaults
+
+# Services to check on docker hosts
+docker_services_to_check:
+  - jellyfin
+  - sonarr
+  - radarr
+  - prowlarr
+  - jellyseerr
+  - vaultwarden
+  - gluetun
+  - flaresolverr
+  # - qbittorrent  # Behind Gluetun VPN, can't check directly
+  # - profilarr    # Rarely used, config sync tool
+
+# Max container restart attempts before alerting
+max_restart_attempts: 3
+
+# Compose file location
+docker_compose_dir: /opt/docker-services

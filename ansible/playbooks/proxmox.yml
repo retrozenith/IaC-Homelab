@@ -1,0 +1,9 @@
+---
+- name: Configure Proxmox Host
+  hosts: proxmox
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: node-exporter
+      tags: [node-exporter, monitoring]

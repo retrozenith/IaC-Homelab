@@ -1,0 +1,34 @@
+---
+# Self-Heal Playbook - Lightweight health check and remediation
+# Run via: ansible-playbook -i inventory/hosts.yml playbooks/self-heal.yml
+
+- name: Self-Heal Docker Services
+  hosts: docker_services
+  gather_facts: true
+  vars:
+    docker_compose_dir: /opt/docker-services
+  roles:
+    - self-heal
+
+- name: Self-Heal Traefik
+  hosts: proxies
+  gather_facts: true
+  vars:
+    docker_compose_dir: /opt/traefik
+    docker_services_to_check:
+      - traefik
+  roles:
+    - self-heal
+
+- name: Self-Heal Monitoring
+  hosts: monitoring
+  gather_facts: true
+  vars:
+    docker_compose_dir: /opt/monitoring
+    docker_services_to_check:
+      - prometheus
+      - grafana
+      - cadvisor
+      - node_exporter
+  roles:
+    - self-heal

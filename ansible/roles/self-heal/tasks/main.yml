@@ -1,0 +1,114 @@
+---
+# Self-heal role - checks and restarts unhealthy services
+
+- name: Check Docker service status
+  ansible.builtin.systemd:
+    name: docker
+  register: docker_status
+  become: true
+  failed_when: false
+
+- name: Start Docker if not running
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+  become: true
+  when: docker_status.status.ActiveState != "active"
+  register: docker_started
+
+- name: Wait for Docker to be ready
+  ansible.builtin.command: docker info
+  register: docker_info
+  until: docker_info.rc == 0
+  retries: 5
+  delay: 5
+  become: true
+  when: docker_started.changed | default(false)
+  changed_when: false
+
+- name: Get list of all containers
+  ansible.builtin.command: docker ps -a --format "{{ '{{' }}.Names{{ '}}' }}:{{ '{{' }}.Status{{ '}}' }}"
+  register: container_list
+  become: true
+  changed_when: false
+
+- name: Display container status
+  ansible.builtin.debug:
+    msg: "{{ container_list.stdout_lines }}"
+
+- name: Check for stopped containers that should be running
+  ansible.builtin.shell: |
+    docker ps -a --filter "status=exited" --filter "name={{ item }}" --format "{{ '{{' }}.Names{{ '}}' }}"
+  loop: "{{ docker_services_to_check }}"
+  register: stopped_containers
+  become: true
+  changed_when: false
+  failed_when: false
+
+- name: Restart stopped containers
+  ansible.builtin.command: docker start {{ item.item }}
+  loop: "{{ stopped_containers.results }}"
+  when: item.stdout != ""
+  become: true
+  register: container_restarts
+
+- name: Check for unhealthy containers
+  ansible.builtin.shell: |
+    docker ps --filter "health=unhealthy" --filter "name={{ item }}" --format "{{ '{{' }}.Names{{ '}}' }}"
+  loop: "{{ docker_services_to_check }}"
+  register: unhealthy_containers
+  become: true
+  changed_when: false
+  failed_when: false
+
+- name: Restart unhealthy containers
+  ansible.builtin.command: docker restart {{ item.item }}
+  loop: "{{ unhealthy_containers.results }}"
+  when: item.stdout != ""
+  become: true
+  register: unhealthy_restarts
+
+- name: Ensure Docker Compose stack is up
+  ansible.builtin.shell: |
+    cd {{ docker_compose_dir }} && docker compose up -d --remove-orphans
+  become: true
+  when: docker_compose_dir is defined
+  register: compose_up
+  changed_when: "'Started' in compose_up.stdout or 'Recreated' in compose_up.stdout"
+
+- name: Check node_exporter status (if installed)
+  ansible.builtin.systemd:
+    name: node_exporter
+  register: node_exporter_status
+  become: true
+  failed_when: false
+
+- name: Restart node_exporter if not running
+  ansible.builtin.systemd:
+    name: node_exporter
+    state: started
+    enabled: true
+  become: true
+  when:
+    - node_exporter_status is defined
+    - node_exporter_status.status is defined
+    - node_exporter_status.status.ActiveState is defined
+    - node_exporter_status.status.ActiveState != "active"
+  failed_when: false
+
+- name: Generate healing report
+  ansible.builtin.set_fact:
+    healing_report:
+      host: "{{ inventory_hostname }}"
+      docker_restarted: "{{ docker_started.changed | default(false) }}"
+      containers_restarted: "{{ container_restarts.results | selectattr('changed', 'defined') | selectattr('changed') | list | length }}"
+      unhealthy_restarted: "{{ unhealthy_restarts.results | selectattr('changed', 'defined') | selectattr('changed') | list | length }}"
+
+- name: Display healing report
+  ansible.builtin.debug:
+    msg: |
+      === Self-Heal Report for {{ healing_report.host }} ===
+      Docker service restarted: {{ healing_report.docker_restarted }}
+      Stopped containers restarted: {{ healing_report.containers_restarted }}
+      Unhealthy containers restarted: {{ healing_report.unhealthy_restarted }}

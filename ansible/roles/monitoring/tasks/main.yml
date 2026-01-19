@@ -1,0 +1,85 @@
+---
+- name: Create monitoring stack directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ monitoring_stack_path }}"
+    - "{{ monitoring_stack_path }}/prometheus"
+    - "{{ monitoring_stack_path }}/alertmanager"
+    - "{{ monitoring_stack_path }}/grafana"
+    - "{{ monitoring_stack_path }}/grafana/provisioning"
+    - "{{ monitoring_stack_path }}/grafana/provisioning/datasources"
+    - "{{ monitoring_stack_path }}/grafana/provisioning/dashboards"
+    - "{{ monitoring_stack_path }}/grafana/dashboards"
+    - "{{ monitoring_stack_path }}/alertmanager/secrets" # Secrets directory
+
+- name: Provision GitHub PAT secret
+  ansible.builtin.copy:
+    content: "{{ monitoring_github_pat }}"
+    dest: "{{ monitoring_stack_path }}/alertmanager/secrets/github_pat"
+    mode: "0600"
+    owner: "nobody" # Match Alertmanager user
+  when: monitoring_github_pat is defined
+  notify: Restart monitoring stack
+
+- name: Template Prometheus configuration
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ monitoring_stack_path }}/prometheus/prometheus.yml"
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Template Grafana datasource provisioning
+  ansible.builtin.template:
+    src: grafana-datasources.yml.j2
+    dest: "{{ monitoring_stack_path }}/grafana/provisioning/datasources/datasources.yml"
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Template Grafana dashboard provisioning
+  ansible.builtin.template:
+    src: grafana-dashboards.yml.j2
+    dest: "{{ monitoring_stack_path }}/grafana/provisioning/dashboards/dashboards.yml"
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Template docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ monitoring_stack_path }}/docker-compose.yml"
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Template alert rules
+  ansible.builtin.template:
+    src: alert-rules.yml.j2
+    dest: "{{ monitoring_stack_path }}/prometheus/alert-rules.yml"
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Template Alertmanager configuration
+  ansible.builtin.template:
+    src: alertmanager.yml.j2
+    dest: "{{ monitoring_stack_path }}/alertmanager/alertmanager.yml"
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Start monitoring stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ monitoring_stack_path }}"
+    pull: missing
+    state: present
+
+- name: Display access information
+  ansible.builtin.debug:
+    msg: |
+      Monitoring Stack deployed successfully!
+
+      Access your services at:
+      - Grafana:      http://{{ ansible_host }}:3000 (admin/admin)
+      - Prometheus:   http://{{ ansible_host }}:9090
+      - Alertmanager: http://{{ ansible_host }}:9093
+
+      External access: https://monitoring.{{ domain_name }}

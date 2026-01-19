@@ -1,0 +1,55 @@
+---
+- name: Deploy Traefik Reverse Proxy
+  hosts: proxies
+  become: true
+  gather_facts: false
+
+  vars_files:
+    - ../group_vars/all.yml
+
+  pre_tasks:
+    - name: Fetch secrets from Bitwarden (on localhost)
+      block:
+        - name: Include bitwarden-secrets role
+          ansible.builtin.include_role:
+            name: bitwarden-secrets
+      delegate_to: localhost
+      run_once: true
+
+    - name: Configure LXC for Docker support (on Proxmox host)
+      ansible.builtin.include_role:
+        name: traefik-lxc-config
+      tags: [lxc-config]
+
+    - name: Wait for system to be reachable
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Gather facts after connection
+      ansible.builtin.setup:
+
+  roles:
+    - role: common
+      tags: [common, setup]
+
+    - role: ufw
+      tags: [firewall, setup]
+      vars:
+        ufw_allow_ports:
+          - 80
+          - 443
+          - 8080
+
+    - role: docker
+      tags: [docker, setup]
+
+    - role: node-exporter
+      tags: [node-exporter, monitoring]
+
+    - role: traefik
+      tags: [traefik, deploy]
+
+  post_tasks:
+    - name: Display access information
+      ansible.builtin.debug:
+        msg: Traefik Proxy deployed successfully!

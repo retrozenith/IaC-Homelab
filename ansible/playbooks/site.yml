@@ -1,0 +1,12 @@
+---
+# Site playbook - runs both storage and docker-services in order
+- name: Run Proxmox configuration
+  import_playbook: proxmox.yml
+- name: Run Storage configuration
+  import_playbook: storage.yml
+- name: Run Traefik configuration
+  import_playbook: traefik.yml
+- name: Run Monitoring configuration
+  import_playbook: monitoring.yml
+- name: Run Docker Services configuration
+  import_playbook: docker-services.yml

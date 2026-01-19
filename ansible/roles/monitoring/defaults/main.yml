@@ -1,0 +1,10 @@
+---
+# Monitoring stack defaults
+monitoring_stack_path: /opt/monitoring
+monitoring_prometheus_retention: "15d"
+monitoring_grafana_admin_password: "{{ lookup('env', 'GRAFANA_ADMIN_PASSWORD') | default('admin', true) }}" # Should be changed on first login
+
+
+# GitHub PAT for Alertmanager webhook (Bitwarden Secret ID)
+# Used to trigger self-heal GitHub Actions workflow
+# Secret ID defined in group_vars/all.yml as bw_secret_github_pat

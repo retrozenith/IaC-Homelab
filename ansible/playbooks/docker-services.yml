@@ -1,0 +1,68 @@
+---
+- name: Deploy Docker Services
+  hosts: docker-services
+  become: true
+  gather_facts: false
+
+  vars_files:
+    - ../group_vars/all.yml
+
+  pre_tasks:
+    - name: Fetch secrets from Bitwarden (on localhost)
+      block:
+        - name: Include bitwarden-secrets role
+          ansible.builtin.include_role:
+            name: bitwarden-secrets
+      delegate_to: localhost
+      run_once: true
+
+    - name: Configure LXC for Docker support (on Proxmox host)
+      ansible.builtin.include_role:
+        name: lxc-docker-config
+      tags: [lxc-config]
+
+    - name: Wait for system to be reachable
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Gather facts after connection
+      ansible.builtin.setup:
+
+  roles:
+    - role: common
+      tags: [common, setup]
+
+    - role: ufw
+      tags: [firewall, setup]
+      vars:
+        ufw_allow_ports:
+          - 9100
+          - 8085
+          # Docker services
+          - 8222
+          - 5055
+          - 6868
+          - 7878
+          - 8989
+          - 9696
+          - 6881
+          - { port: 6881, proto:udp }
+          - 8000
+          - 8080
+
+    - role: smb-client
+      tags: [smb, storage]
+
+    - role: docker
+      tags: [docker, setup]
+
+    - role: node-exporter
+      tags: [monitoring, node-exporter]
+
+    - role: docker-services
+      tags: [docker-services, deploy]
+
+  post_tasks:
+    - name: Display access information
+      ansible.builtin.debug:
+        msg: Docker Services deployed successfully!

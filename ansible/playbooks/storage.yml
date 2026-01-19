@@ -1,0 +1,56 @@
+---
+- name: Deploy Storage Server
+  hosts: storage
+  become: true
+  gather_facts: false
+
+  vars_files:
+    - ../group_vars/all.yml
+
+  pre_tasks:
+    - name: Wait for system to be reachable
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Gather facts after connection
+      ansible.builtin.setup:
+
+  roles:
+    - role: bitwarden-secrets
+      tags: [secrets]
+      delegate_to: localhost
+      run_once: true
+
+    - role: disk-passthrough
+      tags: [disks, passthrough]
+      when: (storage_disks | default([])) | length > 0
+
+    - role: storage-disks
+      tags: [disks, format]
+      when: (storage_disks | default([])) | length > 0
+
+    - role: common
+      tags: [common, setup]
+
+    - role: ufw
+      tags: [firewall, setup]
+      vars:
+        ufw_allow_ports:
+          - 111
+          - 2049
+          - 445
+          - { port: 137, proto: udp }
+          - { port: 138, proto: udp }
+          - 139
+          - 9100
+
+    - role: samba
+      tags: [samba, storage]
+
+    - role: node-exporter
+      tags: [monitoring, node-exporter]
+
+  post_tasks:
+    - name: Display storage information
+      ansible.builtin.debug:
+        msg: Storage Server deployed successfully!
