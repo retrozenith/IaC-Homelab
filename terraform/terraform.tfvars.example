@@ -1,0 +1,49 @@
+# Copy this file to terraform.tfvars and fill in your values
+# Set BWS_ACCESS_TOKEN environment variable before running terraform
+
+# =============================================================================
+# Bitwarden Secret IDs
+# Create these secrets in Bitwarden Secrets Manager and copy their UUIDs
+# =============================================================================
+bw_secret_proxmox_api_token = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+bw_secret_lxc_root_password = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+bw_secret_ssh_public_key    = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+# Secrets for Ansible (passed via terraform output)
+bw_secret_smb_password         = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+bw_secret_wireguard_key        = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+bw_secret_streamystats_db      = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+bw_secret_streamystats_session = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+# =============================================================================
+# Proxmox Connection
+# =============================================================================
+proxmox_endpoint = "https://192.168.0.26:8006"
+proxmox_insecure = true
+proxmox_node     = "pve"
+
+# =============================================================================
+# Common Configuration
+# =============================================================================
+lxc_template = "local:vztmpl/debian-13-standard_13.1-2_amd64.tar.zst"
+lxc_storage  = "local-lvm"
+lxc_gateway  = "192.168.0.1"
+lxc_bridge   = "vmbr0"
+
+# =============================================================================
+# Storage LXC
+# =============================================================================
+storage_lxc_id     = 200
+storage_lxc_ip     = "192.168.0.101/24"
+storage_lxc_cores  = 2
+storage_lxc_memory = 1024
+
+# =============================================================================
+# Media Stack LXC
+# =============================================================================
+media_lxc_id        = 201
+media_lxc_ip        = "192.168.0.100/24"
+media_lxc_cores     = 4
+media_lxc_memory    = 8192
+media_lxc_swap      = 2048
+media_lxc_disk_size = 50
