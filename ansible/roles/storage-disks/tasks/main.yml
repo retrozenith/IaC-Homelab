@@ -1,0 +1,72 @@
+---
+# This role formats and mounts raw disks inside the storage LXC
+# Uses mergerfs to pool multiple disks into a single mount point
+
+- name: Check if storage disks are defined
+  ansible.builtin.set_fact:
+    has_storage_disks: "{{ (storage_disks | default([])) | length > 0 }}"
+
+- name: Wait for LXC to be ready after restart
+  ansible.builtin.wait_for_connection:
+    timeout: 120
+  when: has_storage_disks
+
+- name: Install filesystem and mergerfs tools
+  ansible.builtin.apt:
+    name:
+      - xfsprogs
+      - parted
+      - fuse3
+      - mergerfs
+    state: present
+    update_cache: true
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+  when: has_storage_disks
+
+- name: Create mount points for bind mounts (ensure existence)
+  ansible.builtin.file:
+    path: "/mnt/disks/{{ item.label }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ storage_disks | default([]) }}"
+  when: has_storage_disks
+
+- name: Create mergerfs mount point
+  ansible.builtin.file:
+    path: "{{ mergerfs_mount_point }}"
+    state: directory
+    mode: "0775"
+    owner: nobody
+    group: nogroup
+  when: has_storage_disks
+
+- name: Build mergerfs source paths
+  ansible.builtin.set_fact:
+    mergerfs_sources: "{{ storage_disks | map(attribute='label') | map('regex_replace', '^(.*)$', '/mnt/disks/\\1') | join(':') }}"
+  when: has_storage_disks
+
+- name: Mount mergerfs pool
+  ansible.posix.mount:
+    path: "{{ mergerfs_mount_point }}"
+    src: "{{ mergerfs_sources }}"
+    fstype: fuse.mergerfs
+    opts: "defaults,allow_other,use_ino,cache.files=partial,dropcacheonclose=true,category.create=mfs"
+    state: mounted
+  when: has_storage_disks
+
+- name: Create storage directories on merged pool
+  ansible.builtin.file:
+    path: "{{ mergerfs_mount_point }}/{{ item }}"
+    state: directory
+    mode: "0775"
+    owner: nobody
+    group: nogroup
+  loop:
+    - media
+    - media/movies
+    - media/tv
+    - media/anime
+    - downloads
+    - backups
+  when: has_storage_disks

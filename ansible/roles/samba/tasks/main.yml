@@ -1,0 +1,71 @@
+---
+- name: Install Samba packages
+  ansible.builtin.apt:
+    name:
+      - samba
+      - samba-common
+      - samba-client
+    state: present
+    update_cache: true
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: Create storage directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0775"
+    owner: nobody
+    group: nogroup
+  loop:
+    - "{{ storage_base_path }}"
+    - "{{ storage_base_path }}/media"
+    - "{{ storage_base_path }}/media/movies"
+    - "{{ storage_base_path }}/media/tv"
+    - "{{ storage_base_path }}/media/anime"
+    - "{{ storage_base_path }}/downloads"
+    - "{{ storage_base_path }}/backups"
+
+- name: Configure Samba
+  ansible.builtin.template:
+    src: smb.conf.j2
+    dest: /etc/samba/smb.conf
+    mode: "0644"
+    backup: true
+  notify: Restart Samba
+
+- name: Create system user for Samba
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    shell: /usr/sbin/nologin
+    create_home: false
+    system: true
+  loop: "{{ smb_users }}"
+
+- name: Create Samba users with password from Bitwarden
+  ansible.builtin.shell: |
+    set -o pipefail
+    (echo "{{ lookup('vars', item.password_fact) }}"; echo "{{ lookup('vars', item.password_fact) }}") | smbpasswd -a -s {{ item.name }}
+  loop: "{{ smb_users }}"
+  no_log: true
+  changed_when: true
+
+- name: Enable Samba user accounts
+  ansible.builtin.command: smbpasswd -e {{ item.name }}
+  loop: "{{ smb_users }}"
+  changed_when: true
+
+- name: Ensure Samba services are running
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop:
+    - smbd
+    - nmbd
+
+- name: Disable Samba AD DC service (not used)
+  ansible.builtin.systemd:
+    name: samba-ad-dc
+    state: stopped
+    enabled: false

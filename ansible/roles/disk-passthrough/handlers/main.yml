@@ -1,0 +1,5 @@
+---
+- name: Restart storage LXC
+  ansible.builtin.command:
+    cmd: "pct reboot {{ storage_lxc_id }}"
+  delegate_to: "{{ proxmox_host }}"
