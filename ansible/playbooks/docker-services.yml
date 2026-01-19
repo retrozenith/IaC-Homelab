@@ -38,6 +38,17 @@
         ufw_allow_ports:
           - 9100
           - 8085
+          # Docker services
+          - 8222
+          - 5055
+          - 6868
+          - 7878
+          - 8989
+          - 9696
+          - 6881
+          - { port: 6881, proto:udp }
+          - 8000
+          - 8080
 
     - role: smb-client
       tags: [smb, storage]
