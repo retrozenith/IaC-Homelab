@@ -1,0 +1,149 @@
+---
+# This role configures an LXC container on the Proxmox host
+# It replaces lxc-docker-config and traefik-lxc-config
+
+- name: Stop LXC container
+  ansible.builtin.command:
+    cmd: "pct stop {{ lxc_id }}"
+  delegate_to: "{{ proxmox_host }}"
+  register: proxmox_lxc_configure_stop_lxc
+  failed_when: proxmox_lxc_configure_stop_lxc.rc != 0 and "is not running" not in proxmox_lxc_configure_stop_lxc.stderr
+  changed_when: proxmox_lxc_configure_stop_lxc.rc == 0
+
+- name: Wait for LXC to stop
+  ansible.builtin.pause:
+    seconds: 5
+
+- name: Enable privileged mode
+  ansible.builtin.lineinfile:
+    path: "/etc/pve/lxc/{{ lxc_id }}.conf"
+    regexp: "^unprivileged:"
+    line: "unprivileged: 0"
+    state: present
+  delegate_to: "{{ proxmox_host }}"
+  when: lxc_privileged | default(true)
+
+- name: Enable nesting and fuse
+  ansible.builtin.lineinfile:
+    path: "/etc/pve/lxc/{{ lxc_id }}.conf"
+    regexp: "^features:"
+    line: "features: nesting=1,fuse=1"
+    state: present
+  delegate_to: "{{ proxmox_host }}"
+  when: lxc_nesting | default(true)
+
+# TUN device for VPN (e.g. Gluetun)
+- name: Configure TUN device
+  when: lxc_tun_enabled | default(false)
+  block:
+    - name: Add TUN device access
+      ansible.builtin.lineinfile:
+        path: "/etc/pve/lxc/{{ lxc_id }}.conf"
+        line: "lxc.cgroup2.devices.allow: c 10:200 rwm"
+        state: present
+      delegate_to: "{{ proxmox_host }}"
+
+    - name: Mount TUN device in LXC
+      ansible.builtin.lineinfile:
+        path: "/etc/pve/lxc/{{ lxc_id }}.conf"
+        line: "lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file 0 0"
+        state: present
+      delegate_to: "{{ proxmox_host }}"
+
+# GPU Passthrough
+- name: Configure GPU passthrough
+  when: lxc_gpu_passthrough | default(false)
+  block:
+    - name: Get GPU render device
+      ansible.builtin.shell: |
+        set -o pipefail
+        ls -la /dev/dri/renderD* 2>/dev/null | head -1 | awk '{print $NF}'
+      register: proxmox_lxc_configure_gpu_render_device
+      delegate_to: "{{ proxmox_host }}"
+      changed_when: false
+
+    - name: Get GPU card device
+      ansible.builtin.shell: |
+        set -o pipefail
+        ls -la /dev/dri/card* 2>/dev/null | head -1 | awk '{print $NF}'
+      register: proxmox_lxc_configure_gpu_card_device
+      delegate_to: "{{ proxmox_host }}"
+      changed_when: false
+
+    - name: Get render device major:minor
+      ansible.builtin.shell: |
+        set -o pipefail
+        stat -c '0x%t 0x%T' {{ proxmox_lxc_configure_gpu_render_device.stdout }} | xargs printf '%d:%d\n'
+      register: proxmox_lxc_configure_render_majmin
+      delegate_to: "{{ proxmox_host }}"
+      when: proxmox_lxc_configure_gpu_render_device.stdout != ""
+      changed_when: false
+
+    - name: Get card device major:minor
+      ansible.builtin.shell: |
+        set -o pipefail
+        stat -c '0x%t 0x%T' {{ proxmox_lxc_configure_gpu_card_device.stdout }} | xargs printf '%d:%d\n'
+      register: proxmox_lxc_configure_card_majmin
+      delegate_to: "{{ proxmox_host }}"
+      when: proxmox_lxc_configure_gpu_card_device.stdout != ""
+      changed_when: false
+
+    - name: Add GPU device passthrough (render)
+      ansible.builtin.lineinfile:
+        path: "/etc/pve/lxc/{{ lxc_id }}.conf"
+        line: "lxc.cgroup2.devices.allow: c {{ proxmox_lxc_configure_render_majmin.stdout }} rwm"
+        state: present
+      delegate_to: "{{ proxmox_host }}"
+      when: proxmox_lxc_configure_render_majmin.stdout is defined
+
+    - name: Add GPU device passthrough (card)
+      ansible.builtin.lineinfile:
+        path: "/etc/pve/lxc/{{ lxc_id }}.conf"
+        line: "lxc.cgroup2.devices.allow: c {{ proxmox_lxc_configure_card_majmin.stdout }} rwm"
+        state: present
+      delegate_to: "{{ proxmox_host }}"
+      when: proxmox_lxc_configure_card_majmin.stdout is defined
+
+    - name: Mount GPU render device in LXC
+      ansible.builtin.lineinfile:
+        path: "/etc/pve/lxc/{{ lxc_id }}.conf"
+        line: "lxc.mount.entry: {{ proxmox_lxc_configure_gpu_render_device.stdout }} dev/dri/renderD128 none bind,optional,create=file 0 0"
+        state: present
+      delegate_to: "{{ proxmox_host }}"
+      when: proxmox_lxc_configure_gpu_render_device.stdout != ""
+
+    - name: Mount GPU card device in LXC
+      ansible.builtin.lineinfile:
+        path: "/etc/pve/lxc/{{ lxc_id }}.conf"
+        line: "lxc.mount.entry: {{ proxmox_lxc_configure_gpu_card_device.stdout }} dev/dri/card0 none bind,optional,create=file 0 0"
+        state: present
+      delegate_to: "{{ proxmox_host }}"
+      when: proxmox_lxc_configure_gpu_card_device.stdout != ""
+
+    - name: Display GPU info
+      ansible.builtin.debug:
+        msg: "GPU Passthrough configured for {{ lxc_id }}"
+
+  rescue:
+    - name: GPU passthrough failed
+      ansible.builtin.debug:
+        msg: "GPU passthrough configuration failed: {{ ansible_failed_result.msg | default('Unknown error') }}"
+    - name: Fail with error
+      ansible.builtin.fail:
+        msg: "GPU configuration failed."
+
+- name: Start LXC container
+  ansible.builtin.command:
+    cmd: "pct start {{ lxc_id }}"
+  delegate_to: "{{ proxmox_host }}"
+  register: proxmox_lxc_configure_start_lxc
+  failed_when: proxmox_lxc_configure_start_lxc.rc != 0 and "is already running" not in proxmox_lxc_configure_start_lxc.stderr
+  changed_when: proxmox_lxc_configure_start_lxc.rc == 0
+
+- name: Wait for LXC to start
+  ansible.builtin.pause:
+    seconds: 10
+
+- name: Wait for connection
+  ansible.builtin.wait_for_connection:
+    timeout: 300

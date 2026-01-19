@@ -6,13 +6,8 @@
     target_lxc_id: "{{ monitoring_lxc_id }}"
 
   pre_tasks:
-    - name: Fetch secrets from Bitwarden (on localhost)
-      block:
-        - name: Include bitwarden-secrets role
-          ansible.builtin.include_role:
-            name: bitwarden-secrets
-      delegate_to: localhost
-      run_once: true
+    - name: Fetch secrets from Bitwarden
+      ansible.builtin.include_tasks: tasks/fetch_secrets.yml
 
   roles:
     - role: lxc-nesting

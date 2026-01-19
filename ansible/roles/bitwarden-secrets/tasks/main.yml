@@ -8,143 +8,70 @@
     msg: "BWS_ACCESS_TOKEN environment variable must be set"
   when: lookup('env', 'BWS_ACCESS_TOKEN') == ''
 
-- name: Fetch SMB password from Bitwarden
+- name: Define secret mappings
+  ansible.builtin.set_fact:
+    bitwarden_secrets:
+      - bw_var: bw_secret_smb_password
+        fact_name: smb_media_password
+        skip_placeholder: false
+      - bw_var: bw_secret_smb_admin_password
+        fact_name: smb_admin_password
+        skip_placeholder: true
+      - bw_var: bw_secret_wireguard_key
+        fact_name: wireguard_private_key
+        skip_placeholder: false
+      - bw_var: bw_secret_streamystats_db
+        fact_name: streamystats_db_password
+        skip_placeholder: false
+      - bw_var: bw_secret_streamystats_session
+        fact_name: streamystats_session_secret
+        skip_placeholder: false
+      - bw_var: bw_secret_cloudflare_token
+        fact_name: cloudflare_api_token
+        skip_placeholder: true
+      - bw_var: bw_secret_domain_name
+        fact_name: domain_name
+        skip_placeholder: true
+      - bw_var: bw_secret_le_email
+        fact_name: le_email
+        skip_placeholder: true
+      - bw_var: bw_secret_github_pat
+        fact_name: monitoring_github_pat
+        skip_placeholder: true
+      - bw_var: bw_secret_traefik_auth
+        fact_name: traefik_dashboard_auth
+        skip_placeholder: false
+      - bw_var: bw_secret_grafana_password
+        fact_name: monitoring_grafana_admin_password
+        skip_placeholder: false
+
+- name: Fetch secrets from Bitwarden
   ansible.builtin.command:
-    cmd: "bws secret get {{ bw_secret_smb_password }} --output json"
+    cmd: "bws secret get {{ lookup('vars', item.bw_var) }} --output json"
   environment:
     BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
-  register: bw_smb_result
+  register: bw_results
   changed_when: false
   no_log: true
   become: false
-  when: bw_secret_smb_password is defined and bw_secret_smb_password != ''
+  loop: "{{ bitwarden_secrets }}"
+  when:
+    - lookup('vars', item.bw_var, default='') is defined
+    - lookup('vars', item.bw_var, default='') != ''
+    - not (item.skip_placeholder and 'PLACEHOLDER' in lookup('vars', item.bw_var, default=''))
 
-- name: Set SMB password fact
+- name: Set secret facts
   ansible.builtin.set_fact:
-    smb_media_password: "{{ (bw_smb_result.stdout | from_json).value }}"
+    "{{ item.item.fact_name }}": "{{ (item.stdout | from_json).value }}"
   no_log: true
-  when: bw_smb_result is defined and bw_smb_result.stdout is defined
+  loop: "{{ bw_results.results }}"
+  when:
+    - item.stdout is defined
+    - not item.skipped | default(false)
+  loop_control:
+    label: "{{ item.item.fact_name }}"
 
-- name: Fetch SMB Admin password from Bitwarden
-  ansible.builtin.command:
-    cmd: "bws secret get {{ bw_secret_smb_admin_password }} --output json"
-  environment:
-    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
-  register: bw_smb_admin_result
-  changed_when: false
-  no_log: true
-  become: false
-  when: bw_secret_smb_admin_password is defined and bw_secret_smb_admin_password != '' and 'PLACEHOLDER' not in bw_secret_smb_admin_password
-
-- name: Set SMB Admin password fact
-  ansible.builtin.set_fact:
-    smb_admin_password: "{{ (bw_smb_admin_result.stdout | from_json).value }}"
-  no_log: true
-  when: bw_smb_admin_result is defined and bw_smb_admin_result.stdout is defined
-
-- name: Fetch WireGuard key from Bitwarden
-  ansible.builtin.command:
-    cmd: "bws secret get {{ bw_secret_wireguard_key }} --output json"
-  environment:
-    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
-  register: bw_wg_result
-  changed_when: false
-  no_log: true
-  become: false
-  when: bw_secret_wireguard_key is defined and bw_secret_wireguard_key != ''
-
-- name: Set WireGuard key fact
-  ansible.builtin.set_fact:
-    wireguard_private_key: "{{ (bw_wg_result.stdout | from_json).value }}"
-  no_log: true
-  when: bw_wg_result is defined and bw_wg_result.stdout is defined
-
-- name: Fetch StreamyStats DB password from Bitwarden
-  ansible.builtin.command:
-    cmd: "bws secret get {{ bw_secret_streamystats_db }} --output json"
-  environment:
-    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
-  register: bw_ss_db_result
-  changed_when: false
-  no_log: true
-  become: false
-  when: bw_secret_streamystats_db is defined and bw_secret_streamystats_db != ''
-
-- name: Set StreamyStats DB password fact
-  ansible.builtin.set_fact:
-    streamystats_db_password: "{{ (bw_ss_db_result.stdout | from_json).value }}"
-  no_log: true
-  when: bw_ss_db_result is defined and bw_ss_db_result.stdout is defined
-
-- name: Fetch StreamyStats session secret from Bitwarden
-  ansible.builtin.command:
-    cmd: "bws secret get {{ bw_secret_streamystats_session }} --output json"
-  environment:
-    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
-  register: bw_ss_session_result
-  changed_when: false
-  no_log: true
-  become: false
-  when: bw_secret_streamystats_session is defined and bw_secret_streamystats_session != ''
-
-- name: Set StreamyStats session secret fact
-  ansible.builtin.set_fact:
-    streamystats_session_secret: "{{ (bw_ss_session_result.stdout | from_json).value }}"
-  no_log: true
-  when: bw_ss_session_result is defined and bw_ss_session_result.stdout is defined
-
-- name: Fetch Cloudflare Token from Bitwarden
-  ansible.builtin.command:
-    cmd: "bws secret get {{ bw_secret_cloudflare_token }} --output json"
-  environment:
-    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
-  register: bw_cf_result
-  changed_when: false
-  no_log: true
-  become: false
-  when: bw_secret_cloudflare_token is defined and bw_secret_cloudflare_token != '' and 'PLACEHOLDER' not in bw_secret_cloudflare_token
-
-- name: Set Cloudflare Token fact
-  ansible.builtin.set_fact:
-    cloudflare_api_token: "{{ (bw_cf_result.stdout | from_json).value }}"
-  no_log: true
-  when: bw_cf_result is defined and bw_cf_result.stdout is defined
-
-- name: Fetch Domain Name from Bitwarden
-  ansible.builtin.command:
-    cmd: "bws secret get {{ bw_secret_domain_name }} --output json"
-  environment:
-    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
-  register: bw_domain_result
-  changed_when: false
-  no_log: true
-  become: false
-  when: bw_secret_domain_name is defined and bw_secret_domain_name != '' and 'PLACEHOLDER' not in bw_secret_domain_name
-
-- name: Set Domain Name fact
-  ansible.builtin.set_fact:
-    domain_name: "{{ (bw_domain_result.stdout | from_json).value }}"
-  no_log: true
-  when: bw_domain_result is defined and bw_domain_result.stdout is defined
-
-- name: Fetch LE Email from Bitwarden
-  ansible.builtin.command:
-    cmd: "bws secret get {{ bw_secret_le_email }} --output json"
-  environment:
-    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
-  register: bw_email_result
-  changed_when: false
-  no_log: true
-  become: false
-  when: bw_secret_le_email is defined and bw_secret_le_email != '' and 'PLACEHOLDER' not in bw_secret_le_email
-
-- name: Set LE Email fact
-  ansible.builtin.set_fact:
-    le_email: "{{ (bw_email_result.stdout | from_json).value }}"
-  no_log: true
-  when: bw_email_result is defined and bw_email_result.stdout is defined
-
-- name: Fetch Vaultwarden Token from Bitwarden
+- name: Fetch Vaultwarden Token from Bitwarden (special case)
   ansible.builtin.command:
     cmd: "bws secret get {{ bw_secret_vaultwarden_token }} --output json"
   environment:
@@ -153,7 +80,10 @@
   changed_when: false
   no_log: true
   become: false
-  when: bw_secret_vaultwarden_token is defined and bw_secret_vaultwarden_token != '' and 'PLACEHOLDER' not in bw_secret_vaultwarden_token
+  when:
+    - bw_secret_vaultwarden_token is defined
+    - bw_secret_vaultwarden_token != ''
+    - "'PLACEHOLDER' not in bw_secret_vaultwarden_token"
 
 - name: Generate Argon2 hash for Vaultwarden Token
   ansible.builtin.shell: |
@@ -166,65 +96,14 @@
   become: false
   args:
     executable: /bin/bash
-  when: bw_token_result is defined and bw_token_result.stdout is defined
+  when:
+    - bw_token_result is defined
+    - bw_token_result.stdout is defined
 
 - name: Set Vaultwarden Token Hash fact
   ansible.builtin.set_fact:
     vaultwarden_admin_token: "{{ vaultwarden_hash_result.stdout }}"
   no_log: true
-  when: vaultwarden_hash_result is defined and vaultwarden_hash_result.stdout is defined
-
-- name: Fetch GitHub PAT from Bitwarden
-  ansible.builtin.command:
-    cmd: "bws secret get {{ bw_secret_github_pat }} --output json"
-  environment:
-    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
-  register: bw_pat_result
-  changed_when: false
-  no_log: true
-  become: false
-  when: bw_secret_github_pat is defined and bw_secret_github_pat != '' and 'PLACEHOLDER' not in bw_secret_github_pat
-
-- name: Set GitHub PAT fact
-  ansible.builtin.set_fact:
-    monitoring_github_pat: "{{ (bw_pat_result.stdout | from_json).value }}"
-  no_log: true
-- name: Set GitHub PAT fact
-  ansible.builtin.set_fact:
-    monitoring_github_pat: "{{ (bw_pat_result.stdout | from_json).value }}"
-  no_log: true
-  when: bw_pat_result is defined and bw_pat_result.stdout is defined
-
-- name: Fetch Traefik Auth from Bitwarden
-  ansible.builtin.command:
-    cmd: "bws secret get {{ bw_secret_traefik_auth }} --output json"
-  environment:
-    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
-  register: bw_traefik_result
-  changed_when: false
-  no_log: true
-  become: false
-  when: bw_secret_traefik_auth is defined and bw_secret_traefik_auth != ''
-
-- name: Set Traefik Auth fact
-  ansible.builtin.set_fact:
-    traefik_dashboard_auth: "{{ (bw_traefik_result.stdout | from_json).value }}"
-  no_log: true
-  when: bw_traefik_result is defined and bw_traefik_result.stdout is defined
-
-- name: Fetch Grafana Password from Bitwarden
-  ansible.builtin.command:
-    cmd: "bws secret get {{ bw_secret_grafana_password }} --output json"
-  environment:
-    BWS_ACCESS_TOKEN: "{{ lookup('env', 'BWS_ACCESS_TOKEN') }}"
-  register: bw_grafana_result
-  changed_when: false
-  no_log: true
-  become: false
-  when: bw_secret_grafana_password is defined and bw_secret_grafana_password != ''
-
-- name: Set Grafana Password fact
-  ansible.builtin.set_fact:
-    monitoring_grafana_admin_password: "{{ (bw_grafana_result.stdout | from_json).value }}"
-  no_log: true
-  when: bw_grafana_result is defined and bw_grafana_result.stdout is defined
+  when:
+    - vaultwarden_hash_result is defined
+    - vaultwarden_hash_result.stdout is defined

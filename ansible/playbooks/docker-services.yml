@@ -8,17 +8,16 @@
     - ../group_vars/all.yml
 
   pre_tasks:
-    - name: Fetch secrets from Bitwarden (on localhost)
-      block:
-        - name: Include bitwarden-secrets role
-          ansible.builtin.include_role:
-            name: bitwarden-secrets
-      delegate_to: localhost
-      run_once: true
+    - name: Fetch secrets from Bitwarden
+      ansible.builtin.include_tasks: tasks/fetch_secrets.yml
 
     - name: Configure LXC for Docker support (on Proxmox host)
       ansible.builtin.include_role:
-        name: lxc-docker-config
+        name: proxmox_lxc_configure
+      vars:
+        lxc_id: "{{ docker_services_lxc_id }}"
+        lxc_gpu_passthrough: "{{ gpu_passthrough | default(false) }}"
+        lxc_tun_enabled: true
       tags: [lxc-config]
 
     - name: Wait for system to be reachable
