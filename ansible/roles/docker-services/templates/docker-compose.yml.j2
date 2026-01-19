@@ -274,12 +274,6 @@ services:
     environment:
       LOG_LEVEL: info
       TZ: ${TZ}
-    healthcheck:
-      test: ["CMD", "curl", "-f", "-X", "POST", "-H", "Content-Type: application/json", "-d", "{\"cmd\":\"request.get\",\"url\":\"http://www.google.com/\",\"maxTimeout\":60000}", "http://localhost:8191/v1"]
-      interval: 60s
-      timeout: 30s
-      retries: 3
-      start_period: 30s
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest

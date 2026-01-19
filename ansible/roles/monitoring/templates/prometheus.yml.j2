@@ -71,3 +71,12 @@ scrape_configs:
       - targets: ['{{ hostvars["traefik"]["ansible_host"] | default("192.168.0.254") }}:8082']
         labels:
           host: 'traefik-lxc'
+
+  # Speedtest Exporter
+  - job_name: 'speedtest'
+    scrape_interval: 60m
+    scrape_timeout: 60s
+    static_configs:
+      - targets: ['{{ hostvars["monitoring"]["ansible_host"] | default("192.168.0.102") }}:9798']
+        labels:
+          host: 'monitoring'

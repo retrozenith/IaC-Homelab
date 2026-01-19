@@ -92,6 +92,15 @@ services:
     networks:
       - monitoring
 
+  speedtest-exporter:
+    image: ghcr.io/danopstech/speedtest_exporter:latest
+    container_name: speedtest_exporter
+    restart: unless-stopped
+    ports:
+      - "9798:9090"
+    networks:
+      - monitoring
+
 networks:
   monitoring:
     driver: bridge

@@ -36,6 +36,8 @@
           - 80
           - 443
           - 8080
+          - 9100
+          - 8082
 
     - role: docker
       tags: [docker, setup]
