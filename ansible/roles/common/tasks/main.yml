@@ -1,3 +1,6 @@
+---
+# This role is executed on all nodes to install common packages and set up the system
+
 - name: Update apt cache
   ansible.builtin.apt:
     update_cache: true
